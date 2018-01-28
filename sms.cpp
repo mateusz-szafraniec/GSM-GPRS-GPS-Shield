@@ -1,5 +1,9 @@
 #include "sms.h"
 
+#include "comGSM.h"
+
+//SMSGSM::SMSGSM(){};
+
 /**********************************************************
 Method sends SMS
 
@@ -26,54 +30,47 @@ an example of usage:
 **********************************************************/
 char SMSGSM::SendSMS(char *number_str, char *message_str)
 {
-     if(strlen(message_str)>159)
-          Serial.println(F("Don't send message longer than 160 characters"));
-     char ret_val = -1;
-     byte i;
-     char end[2];
-     end[0]=0x1a;
-     end[1]='\0';
-     /*
-       if (CLS_FREE != gsm.GetCommLineStatus()) return (ret_val);
-       gsm.SetCommLineStatus(CLS_ATCMD);
-       ret_val = 0; // still not send
-     */
-     // try to send SMS 3 times in case there is some problem
-     for (i = 0; i < 1; i++) {
-          // send  AT+CMGS="number_str"
-
-          gsm.SimpleWrite(F("AT+CMGS=\""));
-          gsm.SimpleWrite(number_str);
-          gsm.SimpleWriteln("\"");
-
+    if(strlen(message_str)>159)
+        Serial.println(F("Don't send message longer than 160 characters"));
+    char ret_val = -1;
+    ret_val = gsm.isNetworkAvailable();
+    if (ret_val!=AT_RESP_OK) return ret_val;
+    ret_val = gsm.getModemStatus();
+    if (ret_val!=CPAS_READY) return ret_val;
+    byte i;
+    char end[2];
+    end[0]=0x1a;
+    end[1]='\0';
+    // try to send SMS 3 times in case there is some problem
+    for (i = 0; i < 3; i++)
+    {
+        // send  AT+CMGS="number_str"
+        strcpy_P(gsm.command,PSTR("AT+CMGS=\""));
+        strcat(gsm.command,number_str);
+        strcat(gsm.command,"\"");
+        ret_val = gsm.SendATCmdWaitResp(gsm.command, 1000, 500, ">", 1);
 #ifdef DEBUG_ON
-          Serial.println("DEBUG:SMS TEST");
+        Serial.println("DEBUG:SMS TEST");
 #endif
-          // 1000 msec. for initial comm tmout
-          // 50 msec. for inter character timeout
-          if (RX_FINISHED_STR_RECV == gsm.WaitResp(1000, 500, ">")) {
+        // 1000 msec. for initial comm tmout
+        // 50 msec. for inter character timeout
+        if (AT_RESP_OK == ret_val)
+        {
 #ifdef DEBUG_ON
-               Serial.println("DEBUG:>");
+            Serial.println("DEBUG:>");
 #endif
-               // send SMS text
-               gsm.SimpleWrite(message_str);
-               gsm.SimpleWriteln(end);
-               //_cell.flush(); // erase rx circular buffer
-               if (RX_FINISHED_STR_RECV == gsm.WaitResp(7000, 5000, "+CMGS")) {
-                    // SMS was send correctly
-                    ret_val = 1;
-
-                    break;
-               } else continue;
-          } else {
-               // try again
-               continue;
-
-          }
-     }
-
-     gsm.SetCommLineStatus(CLS_FREE);
-     return (ret_val);
+            // send SMS text
+            strcat(message_str,end);
+            ret_val = gsm.SendATCmdWaitResp(message_str, 20000, 5000, "+CMGS", 1);
+            if (AT_RESP_OK==ret_val) return ret_val; // SMS was send correctly
+        }
+        else
+        {
+            // try again
+            continue;
+        }
+    }
+    return (ret_val);
 }
 
 /**********************************************************
@@ -102,21 +99,18 @@ an example of usage:
 **********************************************************/
 char SMSGSM::SendSMS(byte sim_phonebook_position, char *message_str)
 {
-     char ret_val = -1;
-     char sim_phone_number[20];
-
-     ret_val = 0; // SMS is not send yet
-     if (sim_phonebook_position == 0) return (-3);
-     if (1 == gsm.GetPhoneNumber(sim_phonebook_position, sim_phone_number)) {
-          // there is a valid number at the spec. SIM position
-          // => send SMS
-          // -------------------------------------------------
-          ret_val = SendSMS(sim_phone_number, message_str);
-     }
-     return (ret_val);
-
+    char ret_val = -1;
+    char sim_phone_number[20];
+    if (sim_phonebook_position == 0) return (-3);
+    if (1 == gsm.GetPhoneNumber(sim_phonebook_position, sim_phone_number))
+    {
+        // there is a valid number at the spec. SIM position
+        // => send SMS
+        // -------------------------------------------------
+        ret_val = SendSMS(sim_phone_number, message_str);
+    }
+    return (ret_val);
 }
-
 
 /**********************************************************
 Method finds out if there is present at least one SMS with
@@ -161,81 +155,31 @@ an example of use:
 **********************************************************/
 char SMSGSM::IsSMSPresent(byte required_status)
 {
-     char ret_val = -1;
-     char *p_char;
-     byte status;
-
-     if (CLS_FREE != gsm.GetCommLineStatus()) return (ret_val);
-     gsm.SetCommLineStatus(CLS_ATCMD);
-     ret_val = 0; // still not present
-
-     switch (required_status) {
-     case SMS_UNREAD:
-          gsm.SimpleWriteln(F("AT+CMGL=\"REC UNREAD\""));
-          break;
-     case SMS_READ:
-          gsm.SimpleWriteln(F("AT+CMGL=\"REC READ\""));
-          break;
-     case SMS_ALL:
-          gsm.SimpleWriteln(F("AT+CMGL=\"ALL\""));
-          break;
-     }
-
-     // 5 sec. for initial comm tmout
-     // and max. 1500 msec. for inter character timeout
-     gsm.RxInit(5000, 1500);
-     // wait response is finished
-     do {
-          if (gsm.IsStringReceived("OK")) {
-               // perfect - we have some response, but what:
-
-               // there is either NO SMS:
-               // <CR><LF>OK<CR><LF>
-
-               // or there is at least 1 SMS
-               // +CMGL: <index>,<stat>,<oa/da>,,[,<tooa/toda>,<length>]
-               // <CR><LF> <data> <CR><LF>OK<CR><LF>
-               status = RX_FINISHED;
-               break; // so finish receiving immediately and let's go to
-               // to check response
-          }
-          status = gsm.IsRxFinished();
-     } while (status == RX_NOT_FINISHED);
-
-
-
-
-     switch (status) {
-     case RX_TMOUT_ERR:
-          // response was not received in specific time
-          ret_val = -2;
-          break;
-
-     case RX_FINISHED:
-          // something was received but what was received?
-          // ---------------------------------------------
-          if(gsm.IsStringReceived("+CMGL:")) {
-               // there is some SMS with status => get its position
-               // response is:
-               // +CMGL: <index>,<stat>,<oa/da>,,[,<tooa/toda>,<length>]
-               // <CR><LF> <data> <CR><LF>OK<CR><LF>
-               p_char = strchr((char *)gsm.comm_buf,':');
-               if (p_char != NULL) {
-                    ret_val = atoi(p_char+1);
-               }
-          } else {
-               // other response like OK or ERROR
-               ret_val = 0;
-          }
-
-          // here we have gsm.WaitResp() just for generation tmout 20msec. in case OK was detected
-          // not due to receiving
-          gsm.WaitResp(20, 20);
-          break;
-     }
-
-     gsm.SetCommLineStatus(CLS_FREE);
-     return (ret_val);
+    char ret_val = -1;
+    char *p_char;
+    switch (required_status)
+    {
+    case SMS_UNREAD:
+        strcpy_P(gsm.command,PSTR("AT+CMGL=\"REC UNREAD\",1"));
+        break;
+    case SMS_READ:
+        strcpy_P(gsm.command,PSTR("AT+CMGL=\"REC READ\",1"));
+        break;
+    case SMS_ALL:
+        strcpy_P(gsm.command,PSTR("AT+CMGL=\"ALL\",1"));
+        break;
+    }
+    ret_val = gsm.SendATCmdWaitResp(gsm.command,5000, 500, str_ok, 3);
+    if (gsm.IsStringReceived_P(PSTR("+CMGL:"))) {
+        // there is some SMS with status => get its position
+        // response is:
+        // +CMGL: <index>,<stat>,<oa/da>,,[,<tooa/toda>,<length>]
+        // <CR><LF> <data> <CR><LF>OK<CR><LF>
+        p_char = strchr((char *)gsm.comm_buf,':');
+        if (p_char != NULL) return atoi(p_char+1);
+    }
+    if (AT_RESP_OK==ret_val) return GETSMS_NO_SMS;
+    return ret_val;
 }
 
 
@@ -283,124 +227,108 @@ an example of usage:
 **********************************************************/
 char SMSGSM::GetSMS(byte position, char *phone_number,byte max_phone_len, char *SMS_text, byte max_SMS_len)
 {
-     char ret_val = -1;
-     char *p_char;
-     char *p_char1;
-     byte len;
+    char ret_val = -1;
+    char *p_char;
+    char *p_char1;
+    byte len;
+    char position_chr[3];
+    if (position == 0) return (GETSMS_NO_SMS);
+    phone_number[0] = 0;  // end of string for now
+    //send "AT+CMGR=X" - where X = position
+    strcpy_P(gsm.command,PSTR("AT+CMGR="));
+    sprintf(position_chr, "%d", (int)position);
+    strcat(gsm.command,position_chr);
+    // 5000 msec. for initial comm tmout
+    // 100 msec. for inter character tmout
+    ret_val = gsm.SendATCmdWaitResp(gsm.command,5000, 500, str_ok, 3);
+    if (ret_val!=AT_RESP_OK) return ret_val;
+    if (!gsm.IsStringReceived_P(PSTR("+CMGR"))) return GETSMS_NO_SMS;
+    if (gsm.IsStringReceived_P(PSTR("\"REC UNREAD\"")))
+        {
+            // get phone number of received SMS: parse phone number string
+            // +XXXXXXXXXXXX
+            // -------------------------------------------------------
+            ret_val = GETSMS_UNREAD_SMS;
+        }
+        //response for already read SMS = old SMS:
+        //<CR><LF>+CMGR: "REC READ","+XXXXXXXXXXXX",,"02/03/18,09:54:28+40"<CR><LF>
+        //There is SMS text<CR><LF>
+    else if(gsm.IsStringReceived_P(PSTR(("\"REC READ\""))))
+        {
+            // get phone number of received SMS
+            // --------------------------------
+            ret_val = GETSMS_READ_SMS;
+        }
+    else
+        {
+            // other type like stored for sending..
+            ret_val = GETSMS_OTHER_SMS;
+        }
 
-     if (position == 0) return (-3);
-     if (CLS_FREE != gsm.GetCommLineStatus()) return (ret_val);
-     gsm.SetCommLineStatus(CLS_ATCMD);
-     phone_number[0] = 0;  // end of string for now
-     ret_val = GETSMS_NO_SMS; // still no SMS
-
-     //send "AT+CMGR=X" - where X = position
-     gsm.SimpleWrite(F("AT+CMGR="));
-     gsm.SimpleWriteln((int)position);
-
-     // 5000 msec. for initial comm tmout
-     // 100 msec. for inter character tmout
-     switch (gsm.WaitResp(5000, 100, "+CMGR")) {
-     case RX_TMOUT_ERR:
-          // response was not received in specific time
-          ret_val = -2;
-          break;
-
-     case RX_FINISHED_STR_NOT_RECV:
-          // OK was received => there is NO SMS stored in this position
-          if(gsm.IsStringReceived("OK")) {
-               // there is only response <CR><LF>OK<CR><LF>
-               // => there is NO SMS
-               ret_val = GETSMS_NO_SMS;
-          } else if(gsm.IsStringReceived("ERROR")) {
-               // error should not be here but for sure
-               ret_val = GETSMS_NO_SMS;
-          }
-          break;
-
-     case RX_FINISHED_STR_RECV:
-          // find out what was received exactly
-
-          //response for new SMS:
-          //<CR><LF>+CMGR: "REC UNREAD","+XXXXXXXXXXXX",,"02/03/18,09:54:28+40"<CR><LF>
-          //There is SMS text<CR><LF>OK<CR><LF>
-          if(gsm.IsStringReceived("\"REC UNREAD\"")) {
-               // get phone number of received SMS: parse phone number string
-               // +XXXXXXXXXXXX
-               // -------------------------------------------------------
-               ret_val = GETSMS_UNREAD_SMS;
-          }
-          //response for already read SMS = old SMS:
-          //<CR><LF>+CMGR: "REC READ","+XXXXXXXXXXXX",,"02/03/18,09:54:28+40"<CR><LF>
-          //There is SMS text<CR><LF>
-          else if(gsm.IsStringReceived("\"REC READ\"")) {
-               // get phone number of received SMS
-               // --------------------------------
-               ret_val = GETSMS_READ_SMS;
-          } else {
-               // other type like stored for sending..
-               ret_val = GETSMS_OTHER_SMS;
-          }
-
-          // extract phone number string
-          // ---------------------------
-          p_char = strchr((char *)(gsm.comm_buf),',');
-          p_char1 = p_char+2; // we are on the first phone number character
-          p_char = strchr((char *)(p_char1),'"');
-          if (p_char != NULL) {
-               *p_char = 0; // end of string
-               len = strlen(p_char1);
-               if(len < max_phone_len){
-                 strcpy(phone_number, (char *)(p_char1));
-               }else{
-                 memcpy(phone_number,(char *)p_char1,(max_phone_len-1));
-                 phone_number[max_phone_len]=0;
-               }
-          }
+        // extract phone number string
+        // ---------------------------
+        p_char = strchr((char *)(gsm.comm_buf),',');
+        p_char1 = p_char+2; // we are on the first phone number character
+        p_char = strchr((char *)(p_char1),'"');
+        if (p_char != NULL)
+        {
+            *p_char = 0; // end of string
+            len = strlen(p_char1);
+            if(len < max_phone_len)
+            {
+                strcpy(phone_number, (char *)(p_char1));
+            }
+            else
+            {
+                memcpy(phone_number,(char *)p_char1,(max_phone_len-1));
+                phone_number[max_phone_len]=0;
+            }
+        }
 
 
-          // get SMS text and copy this text to the SMS_text buffer
-          // ------------------------------------------------------
-          p_char = strchr(p_char+1, 0x0a);  // find <LF>
-          if (p_char != NULL) {
-               // next character after <LF> is the first SMS character
-               p_char++; // now we are on the first SMS character
+        // get SMS text and copy this text to the SMS_text buffer
+        // ------------------------------------------------------
+        p_char = strchr(p_char+1, 0x0a);  // find <LF>
+        if (p_char != NULL)
+        {
+            // next character after <LF> is the first SMS character
+            p_char++; // now we are on the first SMS character
 
-               // find <CR> as the end of SMS string
-               p_char1 = strchr((char *)(p_char), 0x0d);
-               if (p_char1 != NULL) {
-                    // finish the SMS text string
-                    // because string must be finished for right behaviour
-                    // of next strcpy() function
-                    *p_char1 = 0;
-               }
-               // in case there is not finish sequence <CR><LF> because the SMS is
-               // too long (more then 130 characters) sms text is finished by the 0x00
-               // directly in the gsm.WaitResp() routine
+            // find <CR> as the end of SMS string
+            p_char1 = strchr((char *)(p_char), 0x0d);
+            if (p_char1 != NULL)
+            {
+                // finish the SMS text string
+                // because string must be finished for right behaviour
+                // of next strcpy() function
+                *p_char1 = 0;
+            }
+            // in case there is not finish sequence <CR><LF> because the SMS is
+            // too long (more then 130 characters) sms text is finished by the 0x00
+            // directly in the gsm.WaitResp() routine
 
-               // find out length of the SMS (excluding 0x00 termination character)
-               len = strlen(p_char);
+            // find out length of the SMS (excluding 0x00 termination character)
+            len = strlen(p_char);
 
-               if (len < max_SMS_len) {
-                    // buffer SMS_text has enough place for copying all SMS text
-                    // so copy whole SMS text
-                    // from the beginning of the text(=p_char position)
-                    // to the end of the string(= p_char1 position)
-                    strcpy(SMS_text, (char *)(p_char));
-               } else {
-                    // buffer SMS_text doesn't have enough place for copying all SMS text
-                    // so cut SMS text to the (max_SMS_len-1)
-                    // (max_SMS_len-1) because we need 1 position for the 0x00 as finish
-                    // string character
-                    memcpy(SMS_text, (char *)(p_char), (max_SMS_len-1));
-                    SMS_text[max_SMS_len] = 0; // finish string
-               }
-          }
-          break;
-     }
-
-     gsm.SetCommLineStatus(CLS_FREE);
-     return (ret_val);
+            if (len < max_SMS_len)
+            {
+                // buffer SMS_text has enough place for copying all SMS text
+                // so copy whole SMS text
+                // from the beginning of the text(=p_char position)
+                // to the end of the string(= p_char1 position)
+                strcpy(SMS_text, (char *)(p_char));
+            }
+            else
+            {
+                // buffer SMS_text doesn't have enough place for copying all SMS text
+                // so cut SMS text to the (max_SMS_len-1)
+                // (max_SMS_len-1) because we need 1 position for the 0x00 as finish
+                // string character
+                memcpy(SMS_text, (char *)(p_char), (max_SMS_len-1));
+                SMS_text[max_SMS_len] = 0; // finish string
+            }
+        }
+    return (ret_val);
 }
 
 /**********************************************************
@@ -473,43 +401,43 @@ an example of usage:
 char SMSGSM::GetAuthorizedSMS(byte position, char *phone_number,byte max_phone_len, char *SMS_text, byte max_SMS_len,
                               byte first_authorized_pos, byte last_authorized_pos)
 {
-     char ret_val = -1;
-     byte i;
+    char ret_val = -1;
+    byte i;
 
-     ret_val = GetSMS(position, phone_number, max_phone_len, SMS_text, max_SMS_len);
-     if (ret_val < 0) {
-          // here is ERROR return code => finish
-          // -----------------------------------
-     } else if (ret_val == GETSMS_NO_SMS) {
-          // no SMS detected => finish
-          // -------------------------
-     } else if (ret_val == GETSMS_READ_SMS) {
-          // now SMS can has only READ attribute because we have already read
-          // this SMS at least once by the previous function GetSMS()
-          //
-          // new READ SMS was detected on the specified SMS position =>
-          // make authorization now
-          // ---------------------------------------------------------
-          if ((first_authorized_pos == 0) && (last_authorized_pos == 0)) {
-               // authorization is not required => it means authorization is OK
-               // -------------------------------------------------------------
-               ret_val = GETSMS_AUTH_SMS;
-          } else {
-               ret_val = GETSMS_NOT_AUTH_SMS;  // authorization not valid yet
-               for (i = first_authorized_pos; i <= last_authorized_pos; i++) {
-                    if (gsm.ComparePhoneNumber(i, phone_number)) {
-                         // phone numbers are identical
-                         // authorization is OK
-                         // ---------------------------
-                         ret_val = GETSMS_AUTH_SMS;
-                         break;  // and finish authorization
-                    }
-               }
-          }
-     }
-     return (ret_val);
+    ret_val = GetSMS(position, phone_number, max_phone_len, SMS_text, max_SMS_len);
+    if (GETSMS_NO_SMS == ret_val) return ret_val;
+    if ((GETSMS_UNREAD_SMS == ret_val) || (GETSMS_READ_SMS == ret_val) || (GETSMS_OTHER_SMS == ret_val))
+    {
+        // now SMS can has only READ attribute because we have already read
+        // this SMS at least once by the previous function GetSMS()
+        //
+        // new READ SMS was detected on the specified SMS position =>
+        // make authorization now
+        // ---------------------------------------------------------
+        if ((first_authorized_pos == 0) && (last_authorized_pos == 0))
+        {
+            // authorization is not required => it means authorization is OK
+            // -------------------------------------------------------------
+            ret_val = GETSMS_AUTH_SMS;
+        }
+        else
+        {
+            ret_val = GETSMS_NOT_AUTH_SMS;  // authorization not valid yet
+            for (i = first_authorized_pos; i <= last_authorized_pos; i++)
+            {
+                if (gsm.ComparePhoneNumber(i, phone_number))
+                {
+                    // phone numbers are identical
+                    // authorization is OK
+                    // ---------------------------
+                    ret_val = GETSMS_AUTH_SMS;
+                    break;  // and finish authorization
+                }
+            }
+        }
+    }
+    return (ret_val);
 }
-
 
 /**********************************************************
 Method deletes SMS from the specified SMS position
@@ -530,38 +458,41 @@ return:
 **********************************************************/
 char SMSGSM::DeleteSMS(byte position)
 {
-     char ret_val = -1;
+    char ret_val = -1;
 
-     if (position == 0) return (-3);
-     if (CLS_FREE != gsm.GetCommLineStatus()) return (ret_val);
-     gsm.SetCommLineStatus(CLS_ATCMD);
-     ret_val = 0; // not deleted yet
-
-     //send "AT+CMGD=XY" - where XY = position
-     gsm.SimpleWrite(F("AT+CMGD="));
-     gsm.SimpleWriteln((int)position);
-
-
-     // 5000 msec. for initial comm tmout
-     // 20 msec. for inter character timeout
-     switch (gsm.WaitResp(5000, 50, "OK")) {
-     case RX_TMOUT_ERR:
-          // response was not received in specific time
-          ret_val = -2;
-          break;
-
-     case RX_FINISHED_STR_RECV:
-          // OK was received => SMS deleted
-          ret_val = 1;
-          break;
-
-     case RX_FINISHED_STR_NOT_RECV:
-          // other response: e.g. ERROR => SMS was not deleted
-          ret_val = 0;
-          break;
-     }
-
-     gsm.SetCommLineStatus(CLS_FREE);
-     return (ret_val);
+    if (position == 0) return (-3);
+    char position_chr[3];
+    //send "AT+CMGD=XY" - where XY = position
+    strcpy_P(gsm.command,PSTR("AT+CMGD="));
+    sprintf(position_chr, "%d", (int)position);
+    strcat(gsm.command,position_chr);
+    // 5000 msec. for initial comm tmout
+    // 20 msec. for inter character timeout
+    ret_val = gsm.SendATCmdWaitResp(gsm.command,5000, 100, str_ok, 3);
+    return (ret_val);
 }
 
+byte SMSGSM::isSMSReceived()
+{
+    if (!gsm.IsStringReceived_P(PSTR("+CMTI: \"SM\","))) return 0;
+    char *p_char;
+    p_char = strchr((char *)gsm.comm_buf,',');
+    if (p_char != NULL) return atoi(p_char+1);
+    return 0;
+}
+
+bool SMSGSM::isATcommand(byte position) {
+    char ret_val = GetAuthorizedSMS(position, gsm.phone_num, 20, gsm.at_sms_command, 50,1,20);
+    if (GETSMS_AUTH_SMS!=ret_val) return false;
+    if (0==strncmp(gsm.at_sms_command,"AT",2)){
+        return true;
+    }
+    return false;
+}
+
+void SMSGSM::execATcommand()
+{
+    gsm.SendATCmdWaitResp(gsm.at_sms_command,10000,500,str_ok,1);
+    strcpy(gsm.comm_buf2,gsm.comm_buf);
+    this->SendSMS(gsm.phone_num,gsm.comm_buf2);
+}

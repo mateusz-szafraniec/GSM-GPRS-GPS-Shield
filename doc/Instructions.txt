@@ -40,14 +40,13 @@ martines[ dot ]marco[ at ]gmail[ dot ]com
 	1)
 	Open GSM.h and comment-decomment the appropriate lines like below
 	e.g. for Arduino Mega
-	//#define UNO
-	#define MEGA
+	#define HW_SERIAL
 	
 	2)
 	If you use Arduino Uno comment the line in HWSerial.h or decomment if
 	you are using Arduino Mega
 	e.g. for Arduino Mega
-	#define MEGA
+	#define HW_SERIAL
 
 	3)
 	Save and compile

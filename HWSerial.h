@@ -1,4 +1,4 @@
-//#define MEGA
+//#define HW_SERIAL
 
 #ifndef _HWSERIAL_H_
 #define _HWSERIAL_H_
@@ -9,7 +9,7 @@
 
 
 class HWSerial {
-#ifdef MEGA
+#ifdef HW_SERIAL
 private:
      int write_error;
      size_t printNumber(unsigned long, uint8_t);

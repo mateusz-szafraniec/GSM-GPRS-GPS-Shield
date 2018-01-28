@@ -1,5 +1,5 @@
 #include "HWSerial.h"
-#ifdef MEGA
+#ifdef HW_SERIAL
 HWSerial::HWSerial()
 {
      Serial1.begin(9600);

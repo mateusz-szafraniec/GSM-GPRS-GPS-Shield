@@ -1,8 +1,7 @@
 #ifndef _SMS_H_
 #define _SMS_H_
 
-#include "SIM900.h"
-
+#include "comGSM.h"
 class SMSGSM {
 public:
      // SMS's methods
@@ -14,8 +13,12 @@ public:
      char GetAuthorizedSMS(byte position, char *phone_number, byte max_phone_len, char *SMS_text, byte max_SMS_len,
                            byte first_authorized_pos, byte last_authorized_pos);
      char DeleteSMS(byte position);
+     byte isSMSReceived();
+     bool isATcommand(byte position);
+     void execATcommand();
 
 };
 
+extern GSM gsm;
 #endif
 
