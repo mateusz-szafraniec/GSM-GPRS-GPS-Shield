@@ -54,17 +54,10 @@ martines[ dot ]marco[ at ]gmail[ dot ]com
 [2]	How to switch between the old shield (that uses 4 and 5 pins for
 	SoftwareSerial and the new (that used 2 and 3 pins)?
 
-	1)
-	Open GSM.cpp and comment-decomment the appropriate lines like below
-	e.g. for the new one
+	1) TODO
 
-	//#define _GSM_TXPIN_ 4
-	//#define _GSM_RXPIN_ 5
-	#define _GSM_TXPIN_ 2
-	#define _GSM_RXPIN_ 3
 	
-	2)
-	Save and compile
+
 
 [3]	My shield doesn't work. Why?
 	
