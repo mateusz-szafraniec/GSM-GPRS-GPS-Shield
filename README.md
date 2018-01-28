@@ -1,4 +1,7 @@
-GSM/GPRS & GPS Shield Library for modules using SIM900/SIM908
+### Warning! Work in progress. Probably buggy code and examples.
+
+GSM/GPRS & GPS Shield Library for modules using m590e/SIM800/SIM808/SIM900/SIM908
+based on https://github.com/MarcoMartines/GSM-GPRS-GPS-Shield
 ======
 NOTE: This repo has been migrated from google code repo: http://code.google.com/p/gsm-shield-arduino/
 
