@@ -1661,85 +1661,91 @@ char GSM::modemInit(byte group)
       break;
     }
   
-  case INIT_CHECK_SIGNAL_QUALITY: //TODO
-  if (this->isModemReady() != AT_RESP_OK) {
-         #ifdef DEBUG_ON
-            Serial.println(F("not responding"));
-         #endif
-         this->modemInit(INIT_POWER_ON);
-         break;
-  } 
-  result = this->signalQuality();
-  #ifdef DEBUG_ON
-    Serial.print(F("CSQ: "));
-    Serial.println((int)result);
-  #endif
-  if ((result==99) || (result==0)) {
-    byte k=0;
-      while (((result==0) || (result==99)) && (k<120)) {
-        if (this->isModemReady() != AT_RESP_OK) {
+  case INIT_CHECK_SIGNAL_QUALITY:
+    result = this->getModemStatus();
+    if ((result != CPAS_READY) && (result != CPAS_RINGING) && (result != CPAS_CALL_IN_PROGRESS)) 
+    {
+     #ifdef DEBUG_ON
+        Serial.println(F("not responding"));
+     #endif
+     this->modemInit(INIT_POWER_ON);
+     break;
+    }  
+    result = this->signalQuality();
+    #ifdef DEBUG_ON
+      Serial.print(F("CSQ: "));
+      Serial.println((int)result);
+    #endif
+    if ((result==99) || (result==0)) 
+    {
+        byte k=0;
+        while (((result==0) || (result==99)) && (k<120)) 
+        {
+            if (this->isModemReady() != AT_RESP_OK) 
+            {
              #ifdef DEBUG_ON
               Serial.println(F("not responding"));
-           #endif
-           this->modemInit(INIT_POWER_ON);
-           break;
+             #endif
+             this->modemInit(INIT_POWER_ON);
+             break;
+            }
+            result = this->signalQuality();
+            #ifdef DEBUG_ON
+              Serial.print(F("."));
+            #endif
+            delay(500);
+            k++;
         }
-        result = this->signalQuality();
         #ifdef DEBUG_ON
-          Serial.print(F("."));
+          Serial.print(F("CSQ: "));
+          Serial.println((int)result);
         #endif
-        delay(500);
-        k++;
-      }
-      #ifdef DEBUG_ON
-        Serial.print(F("CSQ: "));
-        Serial.println((int)result);
-      #endif
-      if (k=120) {
-        modemInit(INIT_CHECK_NETWORK_REGISTRATION);
-        break;
-      }
-  }
+        if (k=120) 
+        {
+            modemInit(INIT_CHECK_NETWORK_REGISTRATION);
+            break;
+        }
+    }
 
-  case PARAM_SET_9:
-  result = this->selectSIMPhoneBook();
-  #ifdef DEBUG_ON
-  Serial.print(F("."));
-  #endif
-  result = this->setTEcharacterGSM();
-  #ifdef DEBUG_ON
-  Serial.print(F("."));
-  #endif
-  result = this->setSMSTextMode();
-  #ifdef DEBUG_ON
-  Serial.print(F("."));
-  #endif
-  result = this->InitSMSMemory();
-  #ifdef DEBUG_ON
-  Serial.print(F("."));
-  #endif
-  result = this->clip(true);
-  #ifdef DEBUG_ON
-  Serial.print(F("."));
-  #endif
-  
-  result = this->isNetworkAvailable();
-  #ifdef DEBUG_ON
-  Serial.println(F("."));
-  Serial.print(F("Init: "));
-  #endif
-  if (result==true) {
+  case PARAM_SET_9:  //TODO
+    result = this->selectSIMPhoneBook();
     #ifdef DEBUG_ON
-      Serial.println(F("DONE!"));
+      Serial.print(F("."));
     #endif
+    result = this->setTEcharacterGSM();
+    #ifdef DEBUG_ON
+      Serial.print(F("."));
+    #endif
+    result = this->setSMSTextMode();
+    #ifdef DEBUG_ON
+      Serial.print(F("."));
+    #endif
+    result = this->InitSMSMemory();
+    #ifdef DEBUG_ON
+      Serial.print(F("."));
+    #endif
+    result = this->clip(true);
+    #ifdef DEBUG_ON
+      Serial.print(F("."));
+    #endif
+  
+    result = this->isNetworkAvailable();
+    #ifdef DEBUG_ON
+    Serial.println(F("."));
+    Serial.print(F("Init: "));
+    #endif
+    if (result==true) {
+      #ifdef DEBUG_ON
+        Serial.println(F("DONE!"));
+      #endif
+    }
+    else {
+    #ifdef DEBUG_ON
+      Serial.println(F("FAILED!!!"));
+    #endif
+    }
+    return result;
   }
-  else {
-  #ifdef DEBUG_ON
-    Serial.println(F("FAILED!!!"));
-  #endif
-  }
-  return result;
-}
 }
 
 void GSM::toggleBoot(byte boot)
