@@ -1,23 +1,14 @@
-### Warning! Work in progress. Probably buggy code and examples.
-
+## Warning! Work in progress. Probably buggy code and examples.
 GSM/GPRS & GPS Shield Library for modules using m590e/SIM800/SIM808/SIM900/SIM908
 based on https://github.com/MarcoMartines/GSM-GPRS-GPS-Shield
+and https://github.com/meirm/SerialGSM
 ======
-NOTE: This repo has been migrated from google code repo: http://code.google.com/p/gsm-shield-arduino/
 
-
-For informations and support:
-- http://www.gsmlib.org/
-- http://code.google.com/p/gsm-shield-arduino/
-- http://www.open-electronics.org/arduino-gsm-shield/
-- http://www.futurashop.it/
-
-Basic Function overview: [Overview](https://raw.github.com/MarcoMartines/GSM-GPRS-GPS-Shield/GSMSHIELD/README)
+Basic Function overview: [Overview](https://raw.githubusercontent.com/mateusz-szafraniec/GSM-GPRS-GPS-Shield/develop/README)
 
 ### Install Notes:
 - Download current release:
-	- Generic Version [current](https://github.com/MarcoMartines/GSM-GPRS-GPS-Shield/archive/v3.07.1.zip)
-	- TiDiGino Version [current](https://github.com/MarcoMartines/GSM-GPRS-GPS-Shield/archive/v3.07_TDG.zip)
+	- Generic Version [current](https://github.com/todo.zip)
 - Extract to your arduino/libraries folder
 
 ### LICENSE:
@@ -46,5 +37,6 @@ Contributions have been made by the following organizations:
 As well as, but not limited to, the following individuals:
  - [@MarcoMartines](https://github.com/MarcoMartines)
  - [@madmaze](https://github.com/madmaze)
+ - [@meirm] (https://github.com/meirm)
  - commiters from google code: https://code.google.com/p/gsm-shield-arduino/people/list
 names listed in no particular order.
