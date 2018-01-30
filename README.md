@@ -1,8 +1,8 @@
 ## Warning! Work in progress. Probably buggy code and examples.
-GSM/GPRS & GPS Shield Library for modules using m590e/SIM800/SIM808/SIM900/SIM908
-based on https://github.com/MarcoMartines/GSM-GPRS-GPS-Shield
-and https://github.com/meirm/SerialGSM
-======
+#### GSM/GPRS & GPS Shield Library for modules using m590e/SIM800/SIM808/SIM900/SIM908
+based on:
+- (https://github.com/MarcoMartines/GSM-GPRS-GPS-Shield)
+- (https://github.com/meirm/SerialGSM)
 
 Basic Function overview: [Overview](https://raw.githubusercontent.com/mateusz-szafraniec/GSM-GPRS-GPS-Shield/develop/README)
 
