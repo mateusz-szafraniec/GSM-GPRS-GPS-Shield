@@ -5,8 +5,8 @@
 
 //debugging
 #define DEBUG_ON
-#define DEBUG_AT
-#define DEBUG_BUFFER
+//#define DEBUG_AT
+//#define DEBUG_BUFFER
 
 //#define HW_SERIAL
 
