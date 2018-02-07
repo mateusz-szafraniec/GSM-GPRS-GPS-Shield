@@ -8,7 +8,7 @@
 //this code is based on the example of Arduino Labs.
 
 //Simple sketch to communicate with SIM900 through AT commands.
-#define M590
+#define SIM808
 
 GSM gsm(2, 3);
 
@@ -37,7 +37,7 @@ void setup()
   //For http uses is recommended to use 4800 or slower.
   gsm.begin(57600);
   gsm.setBootPin(BOOT_PIN);
-  gsm.modemInit(PARAM_SET_0);
+  gsm.modemInit(INIT_POWER_ON);
 };
 
 void loop()
