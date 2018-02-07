@@ -1399,14 +1399,15 @@ char GSM::modemInit(byte group)
           #ifdef DEBUG_ON
             Serial.println(F("modem still not ready"));
           #endif
-          modemInit(INIT_POWER_ON);
+          return AT_RESP_ERR_NO_RESP;
           break;
         }
     }
-  
     #ifdef DEBUG_ON
       Serial.println(F("AT ok"));
-    #endif 
+    #endif
+    return AT_RESP_OK;
+    break; 
   
   case INIT_MODEM_STATUS:
     result = this->getModemStatus();
@@ -1415,7 +1416,7 @@ char GSM::modemInit(byte group)
       #ifdef DEBUG_ON
         Serial.println(F("no response"));
       #endif
-      modemInit(INIT_POWER_ON);
+      return AT_RESP_ERR_NO_RESP;
       break;
     }
     if ((result == CPAS_UNKNOWN) || (result == CPAS_ASLEEP)) 
@@ -1439,7 +1440,7 @@ char GSM::modemInit(byte group)
           #ifdef DEBUG_ON
             Serial.println(F("no response"));
           #endif
-          modemInit(INIT_POWER_ON);
+          return AT_RESP_ERR_NO_RESP;
           break;
         }
     }
@@ -1449,16 +1450,8 @@ char GSM::modemInit(byte group)
       Serial.print(F("modem status result: "));
       Serial.println((int)result);
     #endif
-    
-    result = this->Echo(false);    
-    
-    // Mobile Equipment Error Code
-    #ifdef DEBUG_AT
-        SendATCmdWaitResp(F("AT+CMEE=2"), AT_TO, 50, str_ok, 5);
-    #endif
-    #ifndef DEBUG_AT
-        SendATCmdWaitResp(F("AT+CMEE=0"), AT_TO, 50, str_ok, 5);
-    #endif  
+    return AT_RESP_OK;
+    break; 
   
   case INIT_PIN:
     result = this->getModemStatus();
@@ -1746,6 +1739,29 @@ char GSM::modemInit(byte group)
     }
     return result;
   }
+}
+
+void GSM::initSIM808() 
+{
+  this->modemInit(INIT_POWER_ON);
+  this->modemInit(INIT_MODEM_STATUS);
+  
+  result = this->Echo(false);    
+    
+  // Mobile Equipment Error Code
+  #ifdef DEBUG_AT
+    SendATCmdWaitResp(F("AT+CMEE=2"), AT_TO, 50, str_ok, 5);
+  #endif
+  #ifndef DEBUG_AT
+    SendATCmdWaitResp(F("AT+CMEE=0"), AT_TO, 50, str_ok, 5);
+  #endif
+  
+  this->modemInit(INIT_PIN);
+  this->modemInit(INIT_RF_ON);
+  this->modemInit(INIT_REPORT_NETWORK_REGISTRATION);
+  this->modemInit(INIT_CHECK_NETWORK_REGISTRATION);
+  this->modemInit(INIT_CHECK_NETWORK_SELECTION);
+  this->modemInit(INIT_CHECK_SIGNAL_QUALITY);
 }
 
 void GSM::toggleBoot(byte boot)
