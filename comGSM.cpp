@@ -1570,7 +1570,7 @@ char GSM::modemInit(byte group)
             Serial.print(F("Waiting for network"));
           #endif
           byte k=0;
-          while ((result==CREG_SEARCHING) || (k<240))
+          while ((result==CREG_SEARCHING) && (k<240))
           {
             delay(500);
             #ifdef DEBUG_ON
