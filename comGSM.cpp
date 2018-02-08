@@ -772,8 +772,10 @@ char GSM::checkNetworkRegistration()
 
 **************************************************************/
 uint8_t GSM::signalQuality()
-{
-    if (AT_RESP_OK!=SendATCmdWaitResp(F("AT+CSQ"), CSQ_TO, 100, str_ok, 5)) return 0;
+{   
+    char result = AT_RESP_ERR_NO_RESP;
+    result = SendATCmdWaitResp(F("AT+CSQ"), CSQ_TO, 100, str_ok, 5);
+    if (result != AT_RESP_OK) return result;
     char *str = NULL;
     char *ptr = NULL;
     ptr = strtok_r(comm_buf, " ", &str);
@@ -781,10 +783,12 @@ uint8_t GSM::signalQuality()
     return (atoi(ptr));
 }
 
-//TODO TIMEOUT
+//TODO TIMEOUT oraz zwracane wartosci
 uint8_t GSM::getNetworkSelection()
 {
-    if (AT_RESP_OK!=SendATCmdWaitResp(F("AT+COPS?"), CSQ_TO, 100, str_ok, 5)) return 0;
+    char result = AT_RESP_ERR_NO_RESP;
+    result = SendATCmdWaitResp(F("AT+COPS?"), CSQ_TO, 100, str_ok, 5);
+    if (result != AT_RESP_OK) return result;
     char *str = NULL;
     char *ptr = NULL;
     ptr = strtok_r(comm_buf, " ", &str);
