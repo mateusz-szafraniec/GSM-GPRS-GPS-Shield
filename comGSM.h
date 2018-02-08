@@ -128,9 +128,9 @@ enum rx_state_enum
 
 enum at_resp_enum
 {
-    AT_RESP_ERR_NO_RESP = -1,   // nothing received
-    AT_RESP_ERR_DIF_RESP = 0,   // response_string is different from the response
-    AT_RESP_OK = 1,             // response_string was included in the response
+    AT_RESP_ERR_NO_RESP = -3,   // nothing received
+    AT_RESP_ERR_DIF_RESP = -2,   // response_string is different from the response
+    AT_RESP_OK = -1,             // response_string was included in the response
 
     AT_RESP_LAST_ITEM
 };

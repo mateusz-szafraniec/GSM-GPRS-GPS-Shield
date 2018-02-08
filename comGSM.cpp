@@ -120,9 +120,9 @@ byte GSM::WaitResp_P(uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
 Method sends AT command and waits for response
 
 return:
-      AT_RESP_ERR_NO_RESP = -1,   // no response received
-      AT_RESP_ERR_DIF_RESP = 0,   // response_string is different from the response
-      AT_RESP_OK = 1,             // response_string was included in the response
+      AT_RESP_ERR_NO_RESP = -3,   // no response received
+      AT_RESP_ERR_DIF_RESP = -2,   // response_string is different from the response
+      AT_RESP_OK = -1,             // response_string was included in the response
 **********************************************************/
 char GSM::SendATCmdWaitResp(char const *AT_cmd_string,
                             uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
@@ -184,9 +184,9 @@ char GSM::SendATCmdWaitResp(char const *AT_cmd_string,
 Method sends AT command and waits for response
 
 return:
-      AT_RESP_ERR_NO_RESP = -1,   // no response received
-      AT_RESP_ERR_DIF_RESP = 0,   // response_string is different from the response
-      AT_RESP_OK = 1,             // response_string was included in the response
+      AT_RESP_ERR_NO_RESP = -3,   // no response received
+      AT_RESP_ERR_DIF_RESP = -2,   // response_string is different from the response
+      AT_RESP_OK = -1,             // response_string was included in the response
 **********************************************************/
 char GSM::SendATCmdWaitResp_P(char const *AT_cmd_string,
                             uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
@@ -248,9 +248,9 @@ char GSM::SendATCmdWaitResp_P(char const *AT_cmd_string,
 Method sends AT command and waits for response
 
 return:
-      AT_RESP_ERR_NO_RESP = -1,   // no response received
-      AT_RESP_ERR_DIF_RESP = 0,   // response_string is different from the response
-      AT_RESP_OK = 1,             // response_string was included in the response
+      AT_RESP_ERR_NO_RESP = -3,   // no response received
+      AT_RESP_ERR_DIF_RESP = -2,   // response_string is different from the response
+      AT_RESP_OK = -1,             // response_string was included in the response
 **********************************************************/
 char GSM::SendATCmdWaitResp(const __FlashStringHelper *AT_cmd_string,
                             uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
@@ -311,9 +311,9 @@ char GSM::SendATCmdWaitResp(const __FlashStringHelper *AT_cmd_string,
 Method sends AT command and waits for response
 
 return:
-      AT_RESP_ERR_NO_RESP = -1,   // no response received
-      AT_RESP_ERR_DIF_RESP = 0,   // response_string is different from the response
-      AT_RESP_OK = 1,             // response_string was included in the response
+      AT_RESP_ERR_NO_RESP = -3,   // no response received
+      AT_RESP_ERR_DIF_RESP = -2,   // response_string is different from the response
+      AT_RESP_OK = -1,             // response_string was included in the response
 **********************************************************/
 char GSM::SendATCmdWaitResp_P(const __FlashStringHelper *AT_cmd_string,
                             uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
@@ -577,7 +577,7 @@ void GSM::RxInit(uint16_t start_comm_tmout, uint16_t max_interchar_tmout)
 
 char GSM::Echo(bool state)
 {
-    char retval=-1;
+    char retval=AT_RESP_ERR_NO_RESP;
     if (state==true)
     {
         retval=SendATCmdWaitResp(F("ATE1"), AT_TO, 100, str_ok, 5);
@@ -589,9 +589,9 @@ char GSM::Echo(bool state)
     return retval;
 }
 
-char GSM::InitSMSMemory(void)
+char GSM::InitSMSMemory(void) //TODO do przepisania - return values
 {
-    char ret_val = -1;
+    char ret_val = AT_RESP_ERR_NO_RESP;
     ret_val = 0; // not initialized yet
     //Disable messages about new SMS from the GSM module
     //SendATCmdWaitResp(F("AT+CNMI=2,0"), CNMI_TO, 50, str_ok, 2);
@@ -624,7 +624,7 @@ int GSM::isIP(const char* cadena)
 long GSM::guessBaudRate(void)
 {
     boolean turnedON=false;
-    long baud_rate=-1;
+    long baud_rate=AT_RESP_ERR_NO_RESP;
 #ifdef DEBUG_ON
     Serial.println(F("DB:AUTO BAUD RATE"));
 #endif
@@ -705,12 +705,12 @@ long GSM::guessBaudRate(void)
     // pointer is initialized to the first item of comm. buffer
     p_comm_buf = &comm_buf[0];
     if (turnedON) return baud_rate;
-    return (-1);
+    return (AT_RESP_ERR_NO_RESP);
 }
 
 char GSM::getIMEI(char *imei)
 {
-    char resp = -1;
+    char resp = AT_RESP_ERR_NO_RESP;
     resp = SendATCmdWaitResp(F("AT+GSN"), AT_TO, 100, str_ok, 5);
     if (resp!=AT_RESP_OK) return resp;
     memcpy(imei,comm_buf+2,15);
@@ -720,7 +720,7 @@ char GSM::getIMEI(char *imei)
 
 char GSM::getIMSI(char *imsi)
 {
-    char resp = -1;
+    char resp = AT_RESP_ERR_NO_RESP;
     resp = SendATCmdWaitResp(F("AT+CIMI"), CIMI_TO, 100, str_ok, 5);
     if (resp!=AT_RESP_OK) return resp;
     memcpy(imsi,comm_buf+2,15);
@@ -730,7 +730,7 @@ char GSM::getIMSI(char *imsi)
 
 char GSM::getCCID(char *ccid)
 {
-    char resp = -1;
+    char resp = AT_RESP_ERR_NO_RESP;
     resp = SendATCmdWaitResp(F("AT+CCID"), CIMI_TO, 100, str_ok, 5);
     if (resp!=AT_RESP_OK) return resp;
     memcpy(ccid,comm_buf+2,20);
@@ -740,6 +740,8 @@ char GSM::getCCID(char *ccid)
 
 char GSM::checkNetworkRegistration()
 /*
+ RETURN:
+  -3,-2     Error sending AT command
   0:not registered, the terminal is not searching new operators
   1:has been registered local network
   2:the registration is refused
@@ -748,7 +750,7 @@ char GSM::checkNetworkRegistration()
   5:has been registered, at roaming status
   */
 {
-    char result = -1;
+    char result = AT_RESP_ERR_NO_RESP;
     result = SendATCmdWaitResp(F("AT+CREG?"), CREG_TO, 100, str_ok, 5);
     if (result!=AT_RESP_OK) return result;
     if (strstr_P(comm_buf, PSTR(",0")) != NULL) return CREG_NOT_REGISTERED_NOT_SEARCHING;
@@ -764,7 +766,8 @@ char GSM::checkNetworkRegistration()
   Procedure to check the GSM signal quality. The higher the
   number the better the signal quality.
   RETURN:
-    0     Error sending AT command/No signal
+    -3,-2     Error sending AT command
+    0         No signal
     1 - 99    RSSI signal strength
 
 **************************************************************/
@@ -932,7 +935,7 @@ char GSM::isModemReady()
 #ifdef DEBUG_ON
     Serial.println(F("DB:isModemReady"));
 #endif
-    char ret_val = -1;
+    char ret_val = AT_RESP_ERR_NO_RESP;
     ret_val = SendATCmdWaitResp(F("AT"), AT_TO, 100, str_ok, 3);
     if (AT_RESP_OK!=ret_val)
     {
@@ -948,7 +951,7 @@ char GSM::getLocalTimestamp(bool mode)
 #ifdef DEBUG_ON
     Serial.println(F("DB:getLocalTimestamp"));
 #endif
-    char result=-1;
+    char result=AT_RESP_ERR_NO_RESP;
     if (mode) result=SendATCmdWaitResp(F("AT+CLTS=1"), AT_TO, 100, str_ok, 5);
     else
         result=SendATCmdWaitResp(F("AT+CLTS=0"), AT_TO, 100, str_ok, 5);
@@ -975,7 +978,7 @@ char GSM::clip(bool mode)
 #ifdef DEBUG_ON
     Serial.println(F("DB:clip"));
 #endif
-    char result=-1;
+    char result=AT_RESP_ERR_NO_RESP;
     if (mode) result=SendATCmdWaitResp(F("AT+CLIP=1"), CLIP_TO, 100, str_ok, 5);
     else
         result=SendATCmdWaitResp(F("AT+CLIP=0"), CLIP_TO, 100, str_ok, 5);
@@ -995,8 +998,8 @@ char GSM::isNetworkAvailable()
 #ifdef DEBUG_ON
     Serial.println(F("DB:isNetworkAvailable"));
 #endif
-    char result=-1;
     result=this->isModemReady();
+    char result=AT_RESP_ERR_NO_RESP;
     if (result!=AT_RESP_OK) return result;
     result=this->getModemFunctions();
     if (CFUN_ON!=result) return result;
@@ -1073,7 +1076,7 @@ char GSM::getModemStatus()
 {
     char *str = NULL;
     char *ptr = NULL;
-    char resp = -1;
+    char resp = AT_RESP_ERR_NO_RESP;
     byte cpas = 0;
     resp = SendATCmdWaitResp(F("AT+CPAS"), AT_TO, 100, str_ok, 5);
     if (resp!=AT_RESP_OK) return resp;
@@ -1096,7 +1099,7 @@ char GSM::getModemFunctions()
   17: airplane mode
   */
 {
-    char resp = -1;
+    char resp = AT_RESP_ERR_NO_RESP;
     resp = SendATCmdWaitResp(F("AT+CFUN?"), CFUN_TO, 100, str_ok, 5);
     if (resp!=AT_RESP_OK) return resp;
     if (this->IsStringReceived_P(PSTR("+CFUN: 17"))) return CFUN_AIRPLANE;
@@ -1109,7 +1112,7 @@ char GSM::getModemFunctions()
 
 char GSM::setModemFunctions(byte mode)
 {
-    char resp = -1;
+    char resp = AT_RESP_ERR_NO_RESP;
     switch (mode)
     {
     case CFUN_OFF:
@@ -1137,7 +1140,7 @@ char GSM::PIN()
   -SIM PUK2:need to input PUK2 code
 */
 {
-    char resp = -1;
+    char resp = AT_RESP_ERR_NO_RESP;
     resp = SendATCmdWaitResp(F("AT+CPIN?"), CPIN_TO, 100, str_ok, 5);
     if (resp!=AT_RESP_OK) return resp;
     if (this->IsStringReceived_P(PSTR("READY"))) return PIN_READY;
@@ -1198,7 +1201,7 @@ an example of usage:
 **********************************************************/
 char GSM::ComparePhoneNumber(byte position, char *phone_number)
 {
-    char ret_val = -1;
+    char ret_val = AT_RESP_ERR_NO_RESP;
     char sim_phone_number[20];
 
 
@@ -1257,7 +1260,7 @@ an example of usage:
 //TODO Do przepisania metoda wysylania
 char GSM::GetPhoneNumber(byte position, char *phone_number)
 {
-    char ret_val = -1;
+    char ret_val = AT_RESP_ERR_NO_RESP;
 
     char *p_char;
     char *p_char1;
@@ -1727,7 +1730,7 @@ char GSM::modemInit(byte group)
     Serial.println(F("."));
     Serial.print(F("Init: "));
     #endif
-    if (result==true) {
+    if (result==AT_RESP_OK) {
       #ifdef DEBUG_ON
         Serial.println(F("DONE!"));
       #endif
