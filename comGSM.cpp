@@ -1155,7 +1155,7 @@ char GSM::PIN()
     return PIN_UNKNOWN;
 }
 
-char GSM::PIN(char *PIN)
+char GSM::PIN(const char* PIN)
 {
     strcpy_P(command, PSTR("AT+CPIN=\""));
     strcat(command,PIN);
