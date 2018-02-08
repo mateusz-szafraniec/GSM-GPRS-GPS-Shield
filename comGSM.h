@@ -355,7 +355,7 @@ public:
     char ComparePhoneNumber(byte position, char *phone_number);
     char GetPhoneNumber(byte position, char *phone_number);
 
-    char isModemReady();
+    char AT();
     char getModemStatus();
     char getModemFunctions();
     char setModemFunctions(byte mode);

@@ -934,10 +934,10 @@ int GSM::read(char* result, int resultlength)
     return i;
 }
 
-char GSM::isModemReady()
+char GSM::AT()
 {
 #ifdef DEBUG_ON
-    Serial.println(F("DB:isModemReady"));
+    Serial.println(F("DB:AT"));
 #endif
     char ret_val = AT_RESP_ERR_NO_RESP;
     ret_val = SendATCmdWaitResp(F("AT"), AT_TO, 100, str_ok, 3);
@@ -1002,8 +1002,8 @@ char GSM::isNetworkAvailable()
 #ifdef DEBUG_ON
     Serial.println(F("DB:isNetworkAvailable"));
 #endif
-    result=this->isModemReady();
     char result=AT_RESP_ERR_NO_RESP;
+    result=this->AT();
     if (result!=AT_RESP_OK) return result;
     result=this->getModemFunctions();
     if (CFUN_ON!=result) return result;
@@ -1389,7 +1389,7 @@ char GSM::modemInit(byte group)
   switch (group)
   {
   case INIT_POWER_ON:
-    result = this->isModemReady();
+    result = this->AT();
     if (result != AT_RESP_OK) 
     {
       #ifdef DEBUG_ON
@@ -1401,7 +1401,7 @@ char GSM::modemInit(byte group)
         Serial.print(F("Startup: "));
         Serial.println((int)result);
       #endif
-      if ((result != RX_FINISHED_STR_RECV) && (this->isModemReady() != AT_RESP_OK)) 
+      if ((result != RX_FINISHED_STR_RECV) && (this->AT() != AT_RESP_OK)) 
         {
           #ifdef DEBUG_ON
             Serial.println(F("modem still not ready"));
