@@ -16,17 +16,46 @@
 
 //Simple sketch to start a connection as client.
 
+
+//Simple sketch to communicate with SIM900 through AT commands.
+#define SIM808
 #include <SoftwareSerial.h>
-//#include "inetGSM.h"
+#include "comGSM.h"
+GSM gsm(2, 3);
+
+#define BOOT_PIN 7
+
+int numdata;
+char inSerial[40];
+int i = 0;
+
+
+void setup()
+{
+  pinMode(BOOT_PIN, OUTPUT);  
+#ifdef M590
+  digitalWrite(BOOT_PIN, LOW);
+#endif
+#ifdef SIM808
+  digitalWrite(BOOT_PIN, HIGH);
+#endif
+  
+  
+  //Serial connection.
+  Serial.begin(115200);
+  Serial.println("GSM Shield testing.");
+  //Start configuration of shield with baudrate.
+  //For http uses is recommended to use 4800 or slower.
+  gsm.begin(57600);
+  gsm.setBootPin(BOOT_PIN);
+  gsm.initSIM808();
+};
+
+
 #include "sms.h"
 #include "call.h"
-#define BAUD_RATE 57600
-
-
-//InetGSM inet;
 CallGSM call;
 SMSGSM sms;
-//GPSGSM gps;
 
 char lon[15];
 char lat[15];
@@ -42,120 +71,7 @@ char res;
      char sms_text[200]; // array for the SMS text string
 
 int stat;
-char inSerial[32];
-int i=0;
 boolean started=false;
-#define M590
-
-GSM gsm(2, 3);
-
-#define BOOT_PIN 7 
-
-void setup()
-{
-     //Serial connection.
-     Serial.begin(115200);
-     Serial.println("GSM Shield testing.");
-     #ifdef M590
-  digitalWrite(BOOT_PIN, LOW);
-#endif
-#ifdef SIM808
-  digitalWrite(BOOT_PIN, HIGH);
-#endif
-  pinMode(BOOT_PIN, OUTPUT);
-     //Start configuration of shield with baudrate.
-     //For http uses is raccomanded to use 4800 or slower.
-     gsm.begin(BAUD_RATE);
-     modemInit(PARAM_SET_0);
-          //Serial.println("\nstatus=READY");
-          //gsm.forceON();  //To ensure that SIM908 is not only in charge mode
-          started=true;
-     //} else Serial.println("\nstatus=IDLE");
-     
-     res=gsm.getIMEI(tmp);
-     Serial.print(F("res:"));
-     Serial.print((int)res);
-     Serial.print(F(" IMEI:"));
-     Serial.println(tmp);
-     
-     res=gsm.getIMSI(tmp);
-     Serial.print(F("res:"));
-     Serial.print((int)res);
-     Serial.print(F(" IMSI:"));
-     Serial.println(tmp);
-     
-     res=gsm.getCCID(tmp);
-     Serial.print(F("res:"));
-     Serial.print((int)res);
-     Serial.print(F(" CCID:"));
-     Serial.println(tmp);
-     
-     Serial.print(F("ModemStatus:"));
-     Serial.println((int)gsm.getModemStatus());
-
-     Serial.print(F("checkNetworkRegistration:"));
-     Serial.println((int)gsm.checkNetworkRegistration());
-    
-     Serial.print(F("ModemFunctions:"));
-     Serial.println((int)gsm.getModemFunctions());
-     Serial.println(freeRam());
-/*
-     Serial.println("delay...");
-     delay(5000);
-     Serial.print(F("Reset:"));
-     Serial.println((int)gsm.Reset());
-     Serial.println("delay...");
-     delay(10000);
-     
-     Serial.print(F("ModemStatus:"));
-     
-     Serial.println((int)gsm.getModemStatus());
-     
-     Serial.print("set ModemFunctions CFUN_AIRPLANE:");
-     Serial.println((int)gsm.setModemFunctions(CFUN_AIRPLANE));
-     Serial.println("delay...");
-     delay(10000);
-     
-     Serial.print("ModemFunctions:");
-     Serial.println((int)gsm.getModemFunctions());
-     
-     Serial.print("set ModemFunctions CFUN_ON:");
-     Serial.println((int)gsm.setModemFunctions(CFUN_ON));
-     Serial.println("delay...");
-     delay(10000);
-      
-     Serial.print("checkNetworkRegistration:");
-     Serial.println((int)gsm.checkNetworkRegistration());
-*/
-     Serial.print("signalQuality():");
-     Serial.println((int)gsm.signalQuality());
-
-/*
-     gsm.printBuffer();
-     Serial.println("Koniec");
-     */
-     //Serial.println((int)sms.SendSMS(1,"BlahBlah!"));
-     Serial.println((int)sms.IsSMSPresent(SMS_ALL));
-     char position = sms.IsSMSPresent(SMS_ALL);
-     Serial.println((int)sms.GetSMS(1, phone_num, 20, sms_text, 200));
-     Serial.println(phone_num);
-     Serial.println(sms_text);
-          
-     Serial.println((int)sms.GetAuthorizedSMS(1, phone_num, 20, sms_text, 200,1,20));
-     Serial.println(phone_num);
-     Serial.println(sms_text);
-
-     Serial.println((int)sms.GetAuthorizedSMS(3, phone_num, 20, sms_text, 200,1,20));
-     Serial.println(phone_num);
-     Serial.println(sms_text);
-
-     Serial.println((int)sms.GetAuthorizedSMS(4, phone_num, 20, sms_text, 200,1,20));
-     Serial.println(phone_num);
-     Serial.println(sms_text);
-
-     Serial.println((int)sms.DeleteSMS(3));
-     
-};
 
 void loop()
 {     
@@ -207,19 +123,20 @@ void serialswread()
         call.CallStatusWithAuth(phone_num,1,10);
        }
        byte smsposition = sms.isSMSReceived();
-       if (smsposition>0) {
+       if (smsposition>0) 
+       {
           Serial.print(F("SMS:"));
           Serial.println((int)smsposition);
           Serial.println((int)sms.GetAuthorizedSMS(smsposition, phone_num, 20, sms_text, 200,1,20));
           Serial.println(phone_num);
           Serial.println(sms_text);
-          /*
-          if (0==strncmp(sms_text,"AT",2)){
+          if (0==strncmp(sms_text,"AT",2))
+          {
               Serial.println("AT!");
               gsm.SendATCmdWaitResp(sms_text,5000,500,str_ok,1);
               strcpy(sms_text,gsm.comm_buf);
               sms.SendSMS("+48xxxxxxx",sms_text);
-            }*/
+          }
           if (sms.isATcommand(smsposition)) sms.execATcommand();
        }
         if (gsm.IsStringReceived_P(PSTR("+CLIP: "))) {
@@ -244,4 +161,3 @@ int freeRam ()
   int v; 
   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
 }
-

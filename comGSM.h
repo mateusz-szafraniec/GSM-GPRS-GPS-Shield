@@ -382,7 +382,8 @@ public:
     uint8_t getNetworkSelection();
     char modemInit(byte group);
     void toggleBoot(byte boot);
-    void powerOff(); 
+    void powerOff();
+    void GSM::initSIM808(); 
   
 
 };

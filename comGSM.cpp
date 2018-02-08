@@ -1447,7 +1447,7 @@ char GSM::modemInit(byte group)
           #ifdef DEBUG_ON
             Serial.println(F("no response"));
           #endif
-          return AT_RESP_ERR_NO_RESP;
+          return result;
           break;
         }
     }
@@ -1461,62 +1461,40 @@ char GSM::modemInit(byte group)
     break; 
   
   case INIT_PIN:
-    result = this->getModemStatus();
-    if ((result != CPAS_READY) && (result != CPAS_RINGING) && (result != CPAS_CALL_IN_PROGRESS)) 
+    result = this->PIN();
+    if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_DIF_RESP)) 
     {
-      #ifdef DEBUG_ON
-          Serial.println(F("not responding"));
-      #endif
-      this->modemInit(INIT_POWER_ON);
+      return AT_RESP_ERR_NO_RESP;
       break;
     }
-    result = this->PIN();
     #ifdef DEBUG_ON
       Serial.print(F("PIN status result: "));
       Serial.println((int)result);
     #endif
     if (result != PIN_READY) 
     {
-      if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_DIF_RESP)) 
-      {
-         this->modemInit(INIT_POWER_ON);
-         break;
-      }
       #ifdef DEBUG_ON
         Serial.println(F("PIN LOCK"));
       #endif 
       return result;
       break;
     }
-  
-  /*
-  result = gsm.WaitResp(20000,500,"+PBREADY");
-  Serial.print(F("PBREADY: "));
-  Serial.println((int)result);
-  */
-  
+    return AT_RESP_OK;
+    break; 
+   
   case INIT_RF_ON:
-    result = this->getModemStatus();
-    if ((result != CPAS_READY) && (result != CPAS_RINGING) && (result != CPAS_CALL_IN_PROGRESS)) 
-    {
-     #ifdef DEBUG_ON
-        Serial.println(F("not responding"));
-     #endif
-     this->modemInit(INIT_POWER_ON);
-     break;
-    }
     result = this->getModemFunctions();
+    if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_DIF_RESP)) 
+    {
+      return AT_RESP_ERR_NO_RESP;
+      break;
+    }
     #ifdef DEBUG_ON
       Serial.print(F("CFUN result: "));
       Serial.println((int)result);
     #endif
     if (result != CFUN_ON) 
     {
-      if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_DIF_RESP)) 
-      {
-         this->modemInit(INIT_POWER_ON);
-         break;
-      }
       #ifdef DEBUG_ON
         Serial.println(F("RF was off"));
       #endif
@@ -1527,57 +1505,44 @@ char GSM::modemInit(byte group)
       #endif
       if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_DIF_RESP)) 
       {
-         this->modemInit(INIT_POWER_ON);
-         break;
+        return AT_RESP_ERR_NO_RESP;
+        break;
       }
       result = this->getModemFunctions();
       if (result != CFUN_ON) 
         {
-          this->powerOff();
-          delay(10000);
-          this->modemInit(INIT_POWER_ON);
-          break; 
+          return AT_RESP_ERR_NO_RESP;
+          break;
         }
     }
+    return AT_RESP_OK;
+    break; 
   
   case INIT_REPORT_NETWORK_REGISTRATION:
-    result = this->getModemStatus();
-    if ((result != CPAS_READY) && (result != CPAS_RINGING) && (result != CPAS_CALL_IN_PROGRESS)) 
-    {
-     #ifdef DEBUG_ON
-        Serial.println(F("not responding"));
-     #endif
-     this->modemInit(INIT_POWER_ON);
-     break;
-    }
     result = this->SendATCmdWaitResp(F("AT+CREG=2"), CREG_TO, 100, str_ok, 1);
-    
+    if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_DIF_RESP)) 
+    {
+      return AT_RESP_ERR_NO_RESP;
+      break;
+    }
     #ifdef DEBUG_ON
       Serial.print(F("set CREG result: "));
       Serial.println((int)result);
     #endif
- 
- 
+    return AT_RESP_OK;
+    break; 
+  
   case INIT_CHECK_NETWORK_REGISTRATION:
-    result = this->getModemStatus();
-    if ((result != CPAS_READY) && (result != CPAS_RINGING) && (result != CPAS_CALL_IN_PROGRESS)) 
-    {
-     #ifdef DEBUG_ON
-        Serial.println(F("not responding"));
-     #endif
-     this->modemInit(INIT_POWER_ON);
-     break;
-    }
     result = this->checkNetworkRegistration();
+    if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_DIF_RESP)) 
+    {
+      return AT_RESP_ERR_NO_RESP;
+      break;
+    }
     #ifdef DEBUG_ON
       Serial.print(F("creg result: "));
       Serial.println((int)result);
     #endif
-    if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_DIF_RESP)) 
-    {
-      this->modemInit(INIT_POWER_ON);
-      break;
-    }
     if ((result==CREG_NOT_REGISTERED_NOT_SEARCHING) || (result==CREG_REFUSED) || (result==CREG_UNKNOWN) || (result==CREG_NO_SIGNAL)) {
     #ifdef DEBUG_ON
         Serial.println(F("Not registered, not searching"));
@@ -1593,8 +1558,7 @@ char GSM::modemInit(byte group)
                Serial.println(F("not registered"));
                Serial.println(F("Init modem again"));
            #endif
-           powerOff();
-           modemInit(INIT_POWER_ON);
+           return AT_RESP_ERR_NO_RESP;
            break;
         }
         this->modemInit(INIT_CHECK_NETWORK_REGISTRATION);
@@ -1617,25 +1581,21 @@ char GSM::modemInit(byte group)
           }
           if (k=240) 
           {
-            this->powerOff();
-            delay(10000);
-            this->modemInit(INIT_POWER_ON);
-            break;
+           return CREG_SEARCHING;
+           break;
           } 
           Serial.println(F(""));
-        }  
+        }
+    return AT_RESP_OK;
+    break;   
   
   case INIT_CHECK_NETWORK_SELECTION:
-    result = this->getModemStatus();
-    if ((result != CPAS_READY) && (result != CPAS_RINGING) && (result != CPAS_CALL_IN_PROGRESS)) 
-    {
-     #ifdef DEBUG_ON
-        Serial.println(F("not responding"));
-     #endif
-     this->modemInit(INIT_POWER_ON);
-     break;
-    }    
     result = this->getNetworkSelection();
+    if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_DIF_RESP)) 
+    {
+      return AT_RESP_ERR_NO_RESP;
+      break;
+    }
     #ifdef DEBUG_ON
       Serial.print(F("COPS: "));
       Serial.println((int)result);
@@ -1653,25 +1613,22 @@ char GSM::modemInit(byte group)
            Serial.println(F("not registered"));
            Serial.println(F("Init modem again"));
          #endif
-         powerOff();
-         modemInit(INIT_POWER_ON);
+         return AT_RESP_ERR_NO_RESP;
          break;
       }
-      modemInit(INIT_CHECK_NETWORK_REGISTRATION);
+      this->modemInit(INIT_CHECK_NETWORK_REGISTRATION);
       break;
     }
+    return AT_RESP_OK;
+    break; 
   
   case INIT_CHECK_SIGNAL_QUALITY:
-    result = this->getModemStatus();
-    if ((result != CPAS_READY) && (result != CPAS_RINGING) && (result != CPAS_CALL_IN_PROGRESS)) 
-    {
-     #ifdef DEBUG_ON
-        Serial.println(F("not responding"));
-     #endif
-     this->modemInit(INIT_POWER_ON);
-     break;
-    }  
     result = this->signalQuality();
+    if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_DIF_RESP)) 
+    {
+      return AT_RESP_ERR_NO_RESP;
+      break;
+    }
     #ifdef DEBUG_ON
       Serial.print(F("CSQ: "));
       Serial.println((int)result);
@@ -1681,15 +1638,12 @@ char GSM::modemInit(byte group)
         byte k=0;
         while (((result==0) || (result==99)) && (k<120)) 
         {
-            if (this->isModemReady() != AT_RESP_OK) 
-            {
-             #ifdef DEBUG_ON
-              Serial.println(F("not responding"));
-             #endif
-             this->modemInit(INIT_POWER_ON);
-             break;
-            }
             result = this->signalQuality();
+            if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_DIF_RESP)) 
+            {
+              return AT_RESP_ERR_NO_RESP;
+              break;
+            }
             #ifdef DEBUG_ON
               Serial.print(F("."));
             #endif
@@ -1702,10 +1656,12 @@ char GSM::modemInit(byte group)
         #endif
         if (k=120) 
         {
-            modemInit(INIT_CHECK_NETWORK_REGISTRATION);
+            return AT_RESP_ERR_NO_RESP;
             break;
         }
     }
+    return AT_RESP_OK;
+    break; 
 
   case PARAM_SET_9:  //TODO
     result = this->selectSIMPhoneBook();
@@ -1750,11 +1706,21 @@ char GSM::modemInit(byte group)
 
 void GSM::initSIM808() 
 {
-  this->modemInit(INIT_POWER_ON);
-  this->modemInit(INIT_MODEM_STATUS);
+  char result;
+  result = this->modemInit(INIT_POWER_ON);
   
-  result = this->Echo(false);    
-    
+  if (result != AT_RESP_OK)
+  { 
+    this-> initSIM808();
+  }
+  
+  result = this->Echo(false);
+  
+  if (result != AT_RESP_OK)
+  { 
+    this-> initSIM808();
+  }
+  
   // Mobile Equipment Error Code
   #ifdef DEBUG_AT
     SendATCmdWaitResp(F("AT+CMEE=2"), AT_TO, 50, str_ok, 5);
@@ -1763,12 +1729,65 @@ void GSM::initSIM808()
     SendATCmdWaitResp(F("AT+CMEE=0"), AT_TO, 50, str_ok, 5);
   #endif
   
-  this->modemInit(INIT_PIN);
-  this->modemInit(INIT_RF_ON);
+  
+  result = this->modemInit(INIT_PIN);
+  
+  if (result != AT_RESP_OK)
+  { 
+    if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_NO_RESP)) 
+    {
+      this-> initSIM808();
+    }
+    if (result == PIN_INPUT_PIN) 
+    {
+      result = this->PIN("1111");
+    }
+  }
+  
+  result = this->modemInit(INIT_RF_ON);
+  
+  if (result != AT_RESP_OK)
+  { 
+    this-> initSIM808();
+  }
+      
+  result = this->modemInit(INIT_MODEM_STATUS);
+  
+  if (result != AT_RESP_OK)
+  { 
+    this-> initSIM808();
+  }
+   
   this->modemInit(INIT_REPORT_NETWORK_REGISTRATION);
+  
+  if (result != AT_RESP_OK)
+  { 
+    this-> initSIM808();
+  }
+  
   this->modemInit(INIT_CHECK_NETWORK_REGISTRATION);
+  
+  if (result != AT_RESP_OK)
+  { 
+    this-> initSIM808();
+  }
+  
   this->modemInit(INIT_CHECK_NETWORK_SELECTION);
+  
+  if (result != AT_RESP_OK)
+  { 
+    this-> initSIM808();
+  }
+  
   this->modemInit(INIT_CHECK_SIGNAL_QUALITY);
+    
+  if (result != AT_RESP_OK)
+  { 
+    this-> initSIM808();
+  }
+  
+  this->modemInit(PARAM_SET_9);
+  
 }
 
 void GSM::toggleBoot(byte boot)

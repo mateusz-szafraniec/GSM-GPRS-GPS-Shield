@@ -37,7 +37,7 @@ void setup()
   //For http uses is recommended to use 4800 or slower.
   gsm.begin(57600);
   gsm.setBootPin(BOOT_PIN);
-  gsm.modemInit(INIT_POWER_ON);
+  gsm.initSIM808();
 };
 
 void loop()
