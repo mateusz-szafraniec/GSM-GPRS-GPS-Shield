@@ -1546,8 +1546,21 @@ void GSM::initSIM808()
     SendATCmdWaitResp(F("AT+CMEE=0"), AT_TO, 50, str_ok, 5);
   #endif
   
+  this->modemInit(INIT_REPORT_NETWORK_REGISTRATION); // AT+CREG=2
   
-  result = this->modemInit(INIT_PIN);
+  if (result != AT_RESP_OK)
+  { 
+    this-> initSIM808();
+  }
+
+  result = this->modemInit(INIT_RF_ON); //AT+CFUN
+  
+  if (result != AT_RESP_OK)
+  { 
+    this-> initSIM808();
+  }
+  
+  result = this->modemInit(INIT_PIN); // AT+CPIN?
   
   if (result != AT_RESP_OK)
   { 
@@ -1560,36 +1573,22 @@ void GSM::initSIM808()
       result = this->PIN("1111");
     }
   }
-  
-  result = this->modemInit(INIT_RF_ON);
+       
+  result = this->modemInit(INIT_SET_NETWORK_SELECTION); // AT+COPS=0,0
   
   if (result != AT_RESP_OK)
   { 
     this-> initSIM808();
   }
-      
+  
+  result = this->modemInit(INIT_CHECK_NETWORK_REGISTRATION);  // AT+CREG?
+  
+  if (result != AT_RESP_OK)
+  { 
+    this-> initSIM808();
+  }
+  
   result = this->modemInit(INIT_MODEM_STATUS);
-  
-  if (result != AT_RESP_OK)
-  { 
-    this-> initSIM808();
-  }
-   
-  this->modemInit(INIT_REPORT_NETWORK_REGISTRATION);
-  
-  if (result != AT_RESP_OK)
-  { 
-    this-> initSIM808();
-  }
-  
-  this->modemInit(INIT_CHECK_NETWORK_REGISTRATION);
-  
-  if (result != AT_RESP_OK)
-  { 
-    this-> initSIM808();
-  }
-  
-  this->modemInit(INIT_CHECK_NETWORK_SELECTION);
   
   if (result != AT_RESP_OK)
   { 
