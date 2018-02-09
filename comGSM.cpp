@@ -1251,7 +1251,7 @@ char GSM::modemInit(byte group)
       #ifdef DEBUG_ON
         Serial.println(F("no response"));
       #endif
-      return AT_RESP_ERR_NO_RESP;
+      return result;
       break;
     }
     if ((result == CPAS_UNKNOWN) || (result == CPAS_ASLEEP)) 
@@ -1292,7 +1292,7 @@ char GSM::modemInit(byte group)
     result = this->PIN();
     if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_DIF_RESP)) 
     {
-      return AT_RESP_ERR_NO_RESP;
+      return result;
       break;
     }
     #ifdef DEBUG_ON
@@ -1333,13 +1333,13 @@ char GSM::modemInit(byte group)
       #endif
       if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_DIF_RESP)) 
       {
-        return AT_RESP_ERR_NO_RESP;
+        return result;
         break;
       }
       result = this->getModemFunctions();
       if (result != CFUN_ON) 
         {
-          return AT_RESP_ERR_NO_RESP;
+          return result;
           break;
         }
     }
