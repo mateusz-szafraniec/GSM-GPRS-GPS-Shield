@@ -170,7 +170,7 @@ char SMSGSM::IsSMSPresent(byte required_status)
         break;
     }
     ret_val = gsm.SendATCmdWaitResp(gsm.command,5000, 500, str_ok, 3);
-    if (gsm.IsStringReceived_P(PSTR("+CMGL:"))) {
+    if (gsm.IsStringReceived("+CMGL:")) {
         // there is some SMS with status => get its position
         // response is:
         // +CMGL: <index>,<stat>,<oa/da>,,[,<tooa/toda>,<length>]
@@ -242,8 +242,8 @@ char SMSGSM::GetSMS(byte position, char *phone_number,byte max_phone_len, char *
     // 100 msec. for inter character tmout
     ret_val = gsm.SendATCmdWaitResp(gsm.command,5000, 500, str_ok, 3);
     if (ret_val!=AT_RESP_OK) return ret_val;
-    if (!gsm.IsStringReceived_P(PSTR("+CMGR"))) return GETSMS_NO_SMS;
-    if (gsm.IsStringReceived_P(PSTR("\"REC UNREAD\"")))
+    if (!gsm.IsStringReceived("+CMGR")) return GETSMS_NO_SMS;
+    if (gsm.IsStringReceived("\"REC UNREAD\""))
         {
             // get phone number of received SMS: parse phone number string
             // +XXXXXXXXXXXX
@@ -253,7 +253,7 @@ char SMSGSM::GetSMS(byte position, char *phone_number,byte max_phone_len, char *
         //response for already read SMS = old SMS:
         //<CR><LF>+CMGR: "REC READ","+XXXXXXXXXXXX",,"02/03/18,09:54:28+40"<CR><LF>
         //There is SMS text<CR><LF>
-    else if(gsm.IsStringReceived_P(PSTR(("\"REC READ\""))))
+    else if(gsm.IsStringReceived(("\"REC READ\"")))
         {
             // get phone number of received SMS
             // --------------------------------
@@ -474,7 +474,7 @@ char SMSGSM::DeleteSMS(byte position)
 
 byte SMSGSM::isSMSReceived()
 {
-    if (!gsm.IsStringReceived_P(PSTR("+CMTI: \"SM\","))) return 0;
+    if (!gsm.IsStringReceived("+CMTI: \"SM\",")) return 0;
     char *p_char;
     p_char = strchr((char *)gsm.comm_buf,',');
     if (p_char != NULL) return atoi(p_char+1);

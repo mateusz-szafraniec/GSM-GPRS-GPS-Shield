@@ -5,7 +5,7 @@ CallGSM::CallGSM(){};
 
 bool CallGSM::isRinging()
 {
-    return gsm.IsStringReceived_P(PSTR("RING"));
+    return gsm.IsStringReceived("RING");
 }
 
 
@@ -51,42 +51,42 @@ char CallGSM::CallStatusWithAuth(char *phone_number,
 
     ret_val = gsm.SendATCmdWaitResp(F("AT+CLCC"), 5000, 1500, str_ok, 3);
     if (AT_RESP_OK!=ret_val) return ret_val;
-    if(gsm.IsStringReceived_P(PSTR("+CLCC: 1,1,4,0,0")))
+    if(gsm.IsStringReceived("+CLCC: 1,1,4,0,0"))
     {
         // incoming VOICE call - not authorized so far
         // -------------------------------------------
         search_phone_num = 1;
         ret_val = CALL_INCOM_VOICE_NOT_AUTH;
     }
-    else if(gsm.IsStringReceived_P(PSTR("+CLCC: 1,1,4,1,0")))
+    else if(gsm.IsStringReceived("+CLCC: 1,1,4,1,0"))
     {
         // incoming DATA call - not authorized so far
         // ------------------------------------------
         search_phone_num = 1;
         ret_val = CALL_INCOM_DATA_NOT_AUTH;
     }
-    else if(gsm.IsStringReceived_P(PSTR("+CLCC: 1,0,0,0,0")))
+    else if(gsm.IsStringReceived("+CLCC: 1,0,0,0,0"))
     {
         // active VOICE call - GSM is caller
         // ----------------------------------
         search_phone_num = 1;
         ret_val = CALL_ACTIVE_VOICE;
     }
-    else if(gsm.IsStringReceived_P(PSTR("+CLCC: 1,1,0,0,0")))
+    else if(gsm.IsStringReceived("+CLCC: 1,1,0,0,0"))
     {
         // active VOICE call - GSM is listener
         // -----------------------------------
         search_phone_num = 1;
         ret_val = CALL_ACTIVE_VOICE;
     }
-    else if(gsm.IsStringReceived_P(PSTR("+CLCC: 1,1,0,1,0")))
+    else if(gsm.IsStringReceived("+CLCC: 1,1,0,1,0"))
     {
         // active DATA call - GSM is listener
         // ----------------------------------
         search_phone_num = 1;
         ret_val = CALL_ACTIVE_DATA;
     }
-    else if(gsm.IsStringReceived_P(PSTR("+CLCC:")))
+    else if(gsm.IsStringReceived("+CLCC:"))
     {
         // other string is not important for us - e.g. GSM module activate call
         // etc.
@@ -94,7 +94,7 @@ char CallGSM::CallStatusWithAuth(char *phone_number,
         // string <CR><LF>OK<CR><LF>
         ret_val = CALL_OTHERS;
     }
-    else if(gsm.IsStringReceived_P(PSTR("OK")))
+    else if(gsm.IsStringReceived("OK"))
     {
         // only "OK" => there is NO call activity
         // --------------------------------------
@@ -165,8 +165,8 @@ char CallGSM::PickUp(void)
     char ret_val = -1;
     ret_val =  gsm.SendATCmdWaitResp(F("ATA"), ATA_TO, 100, str_ok, 3);
     if (ret_val==AT_RESP_OK) return AT_RESP_OK;
-    if (gsm.IsStringReceived_P(PSTR("NO CARRIER"))) return CALL_NO_CARRIER;
-    if (gsm.IsStringReceived_P(PSTR("ERROR"))) return CALL_NO_CARRIER; //SIM808 zglasza ERROR przy braku aktywnego polaczenia
+    if (gsm.IsStringReceived("NO CARRIER")) return CALL_NO_CARRIER;
+    if (gsm.IsStringReceived("ERROR")) return CALL_NO_CARRIER; //SIM808 zglasza ERROR przy braku aktywnego polaczenia
     return ret_val;
 
 }
@@ -204,8 +204,8 @@ char CallGSM::Call(char *number_string)
     // 50 msec. for inter character timeout
     ret_val = gsm.SendATCmdWaitResp(gsm.command, 15000, 500, str_ok, 1);
     if (AT_RESP_OK==ret_val) return ret_val; //Answered
-    if (gsm.IsStringReceived_P(PSTR("NO CARRIER"))) return CALL_NO_CARRIER;
-    if (gsm.IsStringReceived_P(PSTR("BUSY"))) return CALL_BUSY;
+    if (gsm.IsStringReceived("NO CARRIER")) return CALL_NO_CARRIER;
+    if (gsm.IsStringReceived("BUSY")) return CALL_BUSY;
     if (AT_RESP_ERR_NO_RESP==ret_val) return CALL_NO_RESPONSE;
     return ret_val;
 }
@@ -231,8 +231,8 @@ char CallGSM::Call(int sim_position)
     // 50 msec. for inter character timeout
     ret_val = gsm.SendATCmdWaitResp(gsm.command, 15000, 500, str_ok, 3);
     if (AT_RESP_OK==ret_val) return ret_val; //Answered
-    if (gsm.IsStringReceived_P(PSTR("NO CARRIER"))) return CALL_NO_CARRIER;
-    if (gsm.IsStringReceived_P(PSTR("BUSY"))) return CALL_BUSY;
+    if (gsm.IsStringReceived("NO CARRIER")) return CALL_NO_CARRIER;
+    if (gsm.IsStringReceived("BUSY")) return CALL_BUSY;
     if (AT_RESP_ERR_NO_RESP==ret_val) return CALL_NO_RESPONSE;
     return ret_val;
 

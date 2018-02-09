@@ -347,51 +347,7 @@ byte GSM::IsStringReceived(char const *compare_string)
         Serial.print(F("Buffer: "));
         Serial.println((char *)comm_buf);
 #endif
-        ch = strstr((char *)comm_buf, compare_string);
-        if (ch != NULL)
-        {
-            ret_val = 1;
-        }
-        else
-        {
-
-        }
-    }
-    else
-    {
-#ifdef DEBUG_BUFFER
-        Serial.print(F("Searched: "));
-        Serial.println(compare_string);
-        Serial.println(F("Buffer: NO STRING RCVD"));
-#endif
-    }
-
-    return (ret_val);
-}
-
-//OK
-/**********************************************************
-Method checks BUFFER (received bytes) for string defined in PROGMEM
-
-compare_string - pointer to the string which should be find
-
-return: 0 - string was NOT received
-        1 - string was received
-**********************************************************/
-byte GSM::IsStringReceived_P(char const PROGMEM *compare_string)
-{
-    char *ch;
-    byte ret_val = 0;
-
-    if(comm_buf_len)
-    {
-#ifdef DEBUG_BUFFER
-        Serial.print(F("Searched: "));
-        Serial.println(compare_string);
-        Serial.print(F("Buffer: "));
-        Serial.println((char *)comm_buf);
-#endif
-        ch = strstr_P((char *)comm_buf, compare_string);
+        ch = strstr(comm_buf, compare_string);
         if (ch != NULL)
         {
             ret_val = 1;
@@ -957,11 +913,11 @@ char GSM::getModemFunctions()
     char resp = AT_RESP_ERR_NO_RESP;
     resp = SendATCmdWaitResp(F("AT+CFUN?"), CFUN_TO, 100, str_ok, 5);
     if (resp!=AT_RESP_OK) return resp;
-    if (this->IsStringReceived_P(PSTR("+CFUN: 17"))) return CFUN_AIRPLANE;
-    if (this->IsStringReceived_P(PSTR("+CFUN: 1"))) return CFUN_ON;
-    if (this->IsStringReceived_P(PSTR("+CFUN: 2"))) return CFUN_INVALID;
-    if (this->IsStringReceived_P(PSTR("+CFUN: 4"))) return CFUN_AIRPLANE;
-    if (this->IsStringReceived_P(PSTR("+CFUN: 0"))) return CFUN_OFF;
+    if (this->IsStringReceived("+CFUN: 17")) return CFUN_AIRPLANE;
+    if (this->IsStringReceived("+CFUN: 1")) return CFUN_ON;
+    if (this->IsStringReceived("+CFUN: 2")) return CFUN_INVALID;
+    if (this->IsStringReceived("+CFUN: 4")) return CFUN_AIRPLANE;
+    if (this->IsStringReceived("+CFUN: 0")) return CFUN_OFF;
     return CFUN_INVALID;
 }
 
@@ -998,11 +954,11 @@ char GSM::PIN()
     char resp = AT_RESP_ERR_NO_RESP;
     resp = SendATCmdWaitResp(F("AT+CPIN?"), CPIN_TO, 100, str_ok, 5);
     if (resp!=AT_RESP_OK) return resp;
-    if (this->IsStringReceived_P(PSTR("READY"))) return PIN_READY;
-    if (this->IsStringReceived_P(PSTR("SIM PIN2"))) return PIN_INPUT_PIN2;
-    if (this->IsStringReceived_P(PSTR("SIM PUK2"))) return PIN_INPUT_PUK2;
-    if (this->IsStringReceived_P(PSTR("SIM PIN"))) return PIN_INPUT_PIN;
-    if (this->IsStringReceived_P(PSTR("SIM PUK"))) return PIN_INPUT_PUK;
+    if (this->IsStringReceived("READY")) return PIN_READY;
+    if (this->IsStringReceived("SIM PIN2")) return PIN_INPUT_PIN2;
+    if (this->IsStringReceived("SIM PUK2")) return PIN_INPUT_PUK2;
+    if (this->IsStringReceived("SIM PIN")) return PIN_INPUT_PIN;
+    if (this->IsStringReceived("SIM PUK")) return PIN_INPUT_PUK;
     return PIN_UNKNOWN;
 }
 
