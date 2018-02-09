@@ -16,16 +16,6 @@ based on QuectelM10 chip.
 
 #include "comGSM.h"
 
-//De-comment this two lines below if you have the
-//first version of GSM GPRS Shield
-//#define _GSM_TXPIN_ 4
-//#define _GSM_RXPIN_ 5
-
-//De-comment this two lines below if you have the
-//second version og GSM GPRS Shield
-//#define _GSM_TXPIN_ 2
-//#define _GSM_RXPIN_ 3
-
 #ifndef HW_SERIAL
 GSM::GSM(byte GSM_TXPIN, byte GSM_RXPIN):_cell(GSM_TXPIN,GSM_RXPIN),_status(IDLE){};
 #endif
@@ -36,7 +26,15 @@ GSM::GSM(long baud_rate),_status(IDLE){
 };
 #endif
 
-//OK
+
+/**********************************************************
+Method waits for response
+
+return:
+      RX_TMOUT_ERR = 4,                // timeout, no response received
+      RX_FINISHED_STR_NOT_RECV = 3,    // expected string not received
+      RX_FINISHED_STR_RECV = 2,        // expected string received
+**********************************************************/
 byte GSM::WaitResp(uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
                    char const *expected_resp_string)
 {
@@ -76,6 +74,15 @@ byte GSM::WaitResp(uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
     return (ret_val);
 }
 
+
+/**********************************************************
+Method waits for response defined in PROGMEM
+
+return:
+      RX_TMOUT_ERR = 4,                // timeout, no response received
+      RX_FINISHED_STR_NOT_RECV = 3,    // expected string not received
+      RX_FINISHED_STR_RECV = 2,        // expected string received
+**********************************************************/
 byte GSM::WaitResp_P(uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
                    char const PROGMEM *expected_resp_string)
 {
@@ -115,12 +122,12 @@ byte GSM::WaitResp_P(uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
     return (ret_val);
 }
 
-//OK
+
 /**********************************************************
 Method sends AT command and waits for response
 
 return:
-      AT_RESP_ERR_NO_RESP = -3,   // no response received
+      AT_RESP_ERR_NO_RESP = -3,    // no response received
       AT_RESP_ERR_DIF_RESP = -2,   // response_string is different from the response
       AT_RESP_OK = -1,             // response_string was included in the response
 **********************************************************/
@@ -179,9 +186,9 @@ char GSM::SendATCmdWaitResp(char const *AT_cmd_string,
     return (ret_val);
 }
 
-//OK
+
 /**********************************************************
-Method sends AT command and waits for response
+Method sends AT command and waits for response defined in PROGMEM
 
 return:
       AT_RESP_ERR_NO_RESP = -3,   // no response received
@@ -243,9 +250,9 @@ char GSM::SendATCmdWaitResp_P(char const *AT_cmd_string,
     return (ret_val);
 }
 
-//OK
+
 /**********************************************************
-Method sends AT command and waits for response
+Method sends AT command (from FlashStringHelper) waits for response
 
 return:
       AT_RESP_ERR_NO_RESP = -3,   // no response received
@@ -306,9 +313,9 @@ char GSM::SendATCmdWaitResp(const __FlashStringHelper *AT_cmd_string,
     return (ret_val);
 }
 
-//OK
+
 /**********************************************************
-Method sends AT command and waits for response
+Method sends AT command (from FlashStringHelper) waits for response defined in PROGMEM
 
 return:
       AT_RESP_ERR_NO_RESP = -3,   // no response received
@@ -369,7 +376,14 @@ char GSM::SendATCmdWaitResp_P(const __FlashStringHelper *AT_cmd_string,
     return (ret_val);
 }
 
-//OK
+
+/**********************************************************
+Method waits for response
+
+return:
+    RX_FINISHED = 1               // finished, some character was received
+    RX_TMOUT_ERR = 4              // finished, no character received
+**********************************************************/
 byte GSM::WaitResp(uint16_t start_comm_tmout, uint16_t max_interchar_tmout)
 {
     byte status;
@@ -384,7 +398,15 @@ byte GSM::WaitResp(uint16_t start_comm_tmout, uint16_t max_interchar_tmout)
     return (status);
 }
 
-//OK
+
+/**********************************************************
+Method checks is Rx transfer is finished
+
+return:
+    RX_NOT_FINISHED = 0,          // not finished yet
+    RX_FINISHED = 1               // finished, some character was received
+    RX_TMOUT_ERR = 4              // finished, no character received
+**********************************************************/
 byte GSM::IsRxFinished(void)
 {
     uint16_t num_of_bytes;
@@ -473,9 +495,9 @@ byte GSM::IsRxFinished(void)
     return (ret_val);
 }
 
-//OK
+
 /**********************************************************
-Method checks received bytes
+Method checks BUFFER (received bytes) for string
 
 compare_string - pointer to the string which should be find
 
@@ -520,7 +542,7 @@ byte GSM::IsStringReceived(char const *compare_string)
 
 //OK
 /**********************************************************
-Method checks received bytes
+Method checks BUFFER (received bytes) for string defined in PROGMEM
 
 compare_string - pointer to the string which should be find
 
