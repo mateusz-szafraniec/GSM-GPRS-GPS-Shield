@@ -363,7 +363,7 @@ public:
     char checkNetworkRegistration();
     uint8_t signalQuality();
     char PIN();
-    char PIN(const char* PIN);
+    char PIN(char *PIN);
 
     char setSMSTextMode();
     char setTEcharacterGSM();
