@@ -369,7 +369,7 @@ byte GSM::IsStringReceived(char const *compare_string)
     return (ret_val);
 }
 
-//OK
+//Inits RX buffer
 void GSM::RxInit(uint16_t start_comm_tmout, uint16_t max_interchar_tmout)
 {
     rx_state = RX_NOT_STARTED;
@@ -382,6 +382,15 @@ void GSM::RxInit(uint16_t start_comm_tmout, uint16_t max_interchar_tmout)
     _cell.flush(); // erase rx circular buffer
 }
 
+
+/**********************************************************
+Method enables/disables Echo
+
+return:
+      AT_RESP_ERR_NO_RESP = -3,    // no response received
+      AT_RESP_ERR_DIF_RESP = -2,   // wrong response received
+      AT_RESP_OK = -1,             // ok
+**********************************************************/
 char GSM::Echo(bool state)
 {
     char retval=AT_RESP_ERR_NO_RESP;
@@ -396,6 +405,14 @@ char GSM::Echo(bool state)
     return retval;
 }
 
+/**********************************************************
+Method enables/disables Echo
+
+return:
+      AT_RESP_ERR_NO_RESP = -3,    // no response received
+      AT_RESP_ERR_DIF_RESP = -2,   // wrong response received
+      AT_RESP_OK = -1,             // ok
+**********************************************************/
 char GSM::InitSMSMemory(void) //TODO do przepisania - return values
 {
     char ret_val = AT_RESP_ERR_NO_RESP;
