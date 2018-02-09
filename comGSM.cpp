@@ -76,54 +76,6 @@ byte GSM::WaitResp(uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
 
 
 /**********************************************************
-Method waits for response defined in PROGMEM
-
-return:
-      RX_TMOUT_ERR = 4,                // timeout, no response received
-      RX_FINISHED_STR_NOT_RECV = 3,    // expected string not received
-      RX_FINISHED_STR_RECV = 2,        // expected string received
-**********************************************************/
-byte GSM::WaitResp_P(uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
-                   char const PROGMEM *expected_resp_string)
-{
-    byte status;
-    byte ret_val;
-
-    RxInit(start_comm_tmout, max_interchar_tmout);
-    // wait until response is not finished
-    do
-    {
-        status = IsRxFinished();
-    }
-    while (status == RX_NOT_FINISHED);
-
-    if (status == RX_FINISHED)
-    {
-        // something was received but what was received?
-        // ---------------------------------------------
-
-        if(IsStringReceived_P(expected_resp_string))
-        {
-            // expected string was received
-            // ----------------------------
-            ret_val = RX_FINISHED_STR_RECV;
-        }
-        else
-        {
-            ret_val = RX_FINISHED_STR_NOT_RECV;
-        }
-    }
-    else
-    {
-        // nothing was received
-        // --------------------
-        ret_val = RX_TMOUT_ERR;
-    }
-    return (ret_val);
-}
-
-
-/**********************************************************
 Method sends AT command and waits for response
 
 return:
@@ -187,68 +139,6 @@ char GSM::SendATCmdWaitResp(char const *AT_cmd_string,
 }
 
 
-/**********************************************************
-Method sends AT command and waits for response defined in PROGMEM
-
-return:
-      AT_RESP_ERR_NO_RESP = -3,   // no response received
-      AT_RESP_ERR_DIF_RESP = -2,   // response_string is different from the response
-      AT_RESP_OK = -1,             // response_string was included in the response
-**********************************************************/
-char GSM::SendATCmdWaitResp_P(char const *AT_cmd_string,
-                            uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
-                            char const PROGMEM *response_string,
-                            byte no_of_attempts)
-{
-    byte status;
-    char ret_val = AT_RESP_ERR_NO_RESP;
-    byte i;
-
-    for (i = 0; i < no_of_attempts; i++)
-    {
-        // delay 500 msec. before sending next repeated AT command
-        // so if we have no_of_attempts=1 tmout will not occurred
-        if (i > 0) delay(500);
-#ifdef DEBUG_AT
-        Serial.print(F("AT COMMAND:"));
-        Serial.println(AT_cmd_string);
-#endif
-        _cell.println(AT_cmd_string);
-        status = WaitResp(start_comm_tmout, max_interchar_tmout);
-        if (status == RX_FINISHED)
-        {
-            // something was received but what was received?
-            // ---------------------------------------------
-            if(IsStringReceived_P(response_string))
-            {
-                ret_val = AT_RESP_OK;
-#ifdef DEBUG_AT
-                Serial.println(F("RESULT:OK"));
-#endif
-                break;  // response is OK => finish
-            }
-            else
-            {
-                ret_val = AT_RESP_ERR_DIF_RESP;
-#ifdef DEBUG_AT
-                Serial.println(F("RESULT:DIFF"));
-#endif
-            }
-
-        }
-        else
-        {
-            // nothing was received
-            // --------------------
-#ifdef DEBUG_AT
-            Serial.println(F("RESULT:timeout"));
-#endif
-            ret_val = AT_RESP_ERR_NO_RESP;
-        }
-
-    }
-    return (ret_val);
-}
 
 
 /**********************************************************
@@ -314,67 +204,6 @@ char GSM::SendATCmdWaitResp(const __FlashStringHelper *AT_cmd_string,
 }
 
 
-/**********************************************************
-Method sends AT command (from FlashStringHelper) waits for response defined in PROGMEM
-
-return:
-      AT_RESP_ERR_NO_RESP = -3,   // no response received
-      AT_RESP_ERR_DIF_RESP = -2,   // response_string is different from the response
-      AT_RESP_OK = -1,             // response_string was included in the response
-**********************************************************/
-char GSM::SendATCmdWaitResp_P(const __FlashStringHelper *AT_cmd_string,
-                            uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
-                            char const PROGMEM *response_string,
-                            byte no_of_attempts)
-{
-    byte status;
-    char ret_val = AT_RESP_ERR_NO_RESP;
-    byte i;
-
-    for (i = 0; i < no_of_attempts; i++)
-    {
-        // delay 500 msec. before sending next repeated AT command
-        // so if we have no_of_attempts=1 tmout will not occurred
-        if (i > 0) delay(500);
-#ifdef DEBUG_AT
-        Serial.print(F("AT COMMAND:"));
-        Serial.println(AT_cmd_string);
-#endif
-        _cell.println(AT_cmd_string);
-        status = WaitResp(start_comm_tmout, max_interchar_tmout);
-        if (status == RX_FINISHED)
-        {
-            // something was received but what was received?
-            // ---------------------------------------------
-            if(IsStringReceived_P(response_string))
-            {
-                ret_val = AT_RESP_OK;
-#ifdef DEBUG_AT
-                Serial.println(F("RESULT:OK"));
-#endif
-                break;  // response is OK => finish
-            }
-            else
-            {
-                ret_val = AT_RESP_ERR_DIF_RESP;
-#ifdef DEBUG_AT
-                Serial.println(F("RESULT:DIFF"));
-#endif
-            }
-        }
-        else
-        {
-            // nothing was received
-            // --------------------
-#ifdef DEBUG_AT
-            Serial.println(F("RESULT:timeout"));
-#endif
-            ret_val = AT_RESP_ERR_NO_RESP;
-        }
-
-    }
-    return (ret_val);
-}
 
 
 /**********************************************************
@@ -624,7 +453,7 @@ char GSM::InitSMSMemory(void) //TODO do przepisania - return values
     // send AT command to init memory for SMS in the SIM card
     // response:
     // +CPMS: <usedr>,<totalr>,<usedw>,<totalw>,<useds>,<totals>
-    if (AT_RESP_OK == SendATCmdWaitResp_P(F("AT+CPMS=\"SM\",\"SM\",\"SM\""), CNMI_TO, 1000, PSTR("+CPMS:"), 10))
+    if (AT_RESP_OK == SendATCmdWaitResp(F("AT+CPMS=\"SM\",\"SM\",\"SM\""), CNMI_TO, 1000, "+CPMS:", 10))
     {
         ret_val = 1;
     }
@@ -1303,7 +1132,7 @@ char GSM::GetPhoneNumber(byte position, char *phone_number)
 
     // 5000 msec. for initial comm tmout
     // 50 msec. for inter character timeout
-    switch (WaitResp_P(5000, 50, PSTR("+CPBR")))
+    switch (WaitResp(5000, 50, "+CPBR"))
     {
     case RX_TMOUT_ERR:
         // response was not received in specific time

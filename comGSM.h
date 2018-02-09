@@ -316,24 +316,14 @@ public:
     byte WaitResp(uint16_t start_comm_tmout, uint16_t max_interchar_tmout);
     byte WaitResp(uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
                   char const *expected_resp_string);
-    byte WaitResp_P(uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
-                   char const *expected_resp_string);
     char SendATCmdWaitResp(char const *AT_cmd_string,
                            uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
                            char const *response_string,
                            byte no_of_attempts);
-    char SendATCmdWaitResp_P(char const *AT_cmd_string,
-                            uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
-                            char const *response_string,
-                            byte no_of_attempts);
     char SendATCmdWaitResp(const __FlashStringHelper *AT_cmd_string,
                            uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
                            char const *response_string,
                            byte no_of_attempts);
-    char SendATCmdWaitResp_P(const __FlashStringHelper *AT_cmd_string,
-                            uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
-                            char const *response_string,
-                            byte no_of_attempts);
     void SimpleWrite(char *comm);
     void SimpleWrite(char const *comm);
     void SimpleWrite(int comm);
