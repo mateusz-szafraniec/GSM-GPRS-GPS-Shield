@@ -441,7 +441,14 @@ int GSM::isIP(const char* cadena)
     return 1;
 }
 
-//OK
+
+/**********************************************************
+Method detects baud rate
+
+return:
+      AT_RESP_ERR_NO_RESP = -3,    // no response received
+      baud_rate
+**********************************************************/
 long GSM::guessBaudRate(void)
 {
     boolean turnedON=false;
