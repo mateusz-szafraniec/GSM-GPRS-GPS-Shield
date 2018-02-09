@@ -1374,22 +1374,11 @@ char GSM::modemInit(byte group)
     if ((result==CREG_NOT_REGISTERED_NOT_SEARCHING) || (result==CREG_REFUSED) || (result==CREG_UNKNOWN) || (result==CREG_NO_SIGNAL)) {
     #ifdef DEBUG_ON
         Serial.println(F("Not registered, not searching"));
-        Serial.print(F("searching"));
+        Serial.println(F("searching"));
     #endif
-        #ifdef DEBUG_ON
-           Serial.println(F("Setting AT+COPS=0,0"));
-        #endif
-        result = this->SendATCmdWaitResp(F("AT+COPS=0,0"), COPS_WRITE_TO, 100, str_ok, 2);
-        if (result!=AT_RESP_OK) 
-        {
-           #ifdef DEBUG_ON
-               Serial.println(F("not registered"));
-               Serial.println(F("Init modem again"));
-           #endif
-           return AT_RESP_ERR_NO_RESP;
-           break;
-        }
-        this->modemInit(INIT_CHECK_NETWORK_REGISTRATION);
+        result = this->modemInit(INIT_SET_NETWORK_SELECTION);
+        if (result != AT_RESP_OK) return result;
+        return this->modemInit(INIT_CHECK_NETWORK_REGISTRATION);
         break;
     } else 
        if (result==CREG_SEARCHING) 
@@ -1417,7 +1406,7 @@ char GSM::modemInit(byte group)
     return AT_RESP_OK;
     break;   
   
-  case INIT_CHECK_NETWORK_SELECTION:
+  case INIT_SET_NETWORK_SELECTION:
     result = this->getNetworkSelection();
     if ((result == AT_RESP_ERR_NO_RESP) || (result == AT_RESP_ERR_DIF_RESP)) 
     {
@@ -1430,7 +1419,7 @@ char GSM::modemInit(byte group)
     #endif
     if (result!=0) 
     {
-      result = this->SendATCmdWaitResp(F("AT+COPS=0,0"), COPS_WRITE_TO, 100, str_ok, 2);
+      result = this->SendATCmdWaitResp(F("AT+COPS=0,0"), COPS_WRITE_TO, 5000, str_ok, 2);
       #ifdef DEBUG_ON
         Serial.print(F("set COPS result: "));
         Serial.println((int)result);
@@ -1444,7 +1433,7 @@ char GSM::modemInit(byte group)
          return AT_RESP_ERR_NO_RESP;
          break;
       }
-      this->modemInit(INIT_CHECK_NETWORK_REGISTRATION);
+      return AT_RESP_OK;
       break;
     }
     return AT_RESP_OK;
