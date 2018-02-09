@@ -1430,7 +1430,7 @@ char GSM::modemInit(byte group)
            Serial.println(F("not registered"));
            Serial.println(F("Init modem again"));
          #endif
-         return AT_RESP_ERR_NO_RESP;
+         return result;
          break;
       }
       return AT_RESP_OK;
@@ -1588,7 +1588,7 @@ void GSM::initSIM808()
     this-> initSIM808();
   }
   
-  result = this->modemInit(INIT_MODEM_STATUS);
+  result = this->modemInit(INIT_MODEM_STATUS); // AT+CPAS
   
   if (result != AT_RESP_OK)
   { 
@@ -1603,6 +1603,7 @@ void GSM::initSIM808()
   }
   
   this->modemInit(PARAM_SET_9);
+  SendATCmdWaitResp(F("AT+CLTS=1"), AT_TO, 50, str_ok, 5); // enable receiving network time
   
 }
 

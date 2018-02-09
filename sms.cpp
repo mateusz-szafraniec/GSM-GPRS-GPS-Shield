@@ -492,7 +492,7 @@ bool SMSGSM::isATcommand(byte position) {
 
 void SMSGSM::execATcommand()
 {
-    gsm.SendATCmdWaitResp(gsm.at_sms_command,10000,500,str_ok,1);
+    gsm.SendATCmdWaitResp(gsm.at_sms_command,30000,5000,str_ok,1);
     strcpy(gsm.comm_buf2,gsm.comm_buf);
     this->SendSMS(gsm.phone_num,gsm.comm_buf2);
 }
