@@ -35,11 +35,11 @@ return:
       RX_FINISHED_STR_NOT_RECV = 3,    // expected string not received
       RX_FINISHED_STR_RECV = 2,        // expected string received
 **********************************************************/
-byte GSM::WaitResp(uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
+char GSM::WaitResp(uint16_t start_comm_tmout, uint16_t max_interchar_tmout,
                    char const *expected_resp_string)
 {
-    byte status;
-    byte ret_val;
+    char status;
+    char ret_val;
 
     RxInit(start_comm_tmout, max_interchar_tmout);
     // wait until response is not finished
@@ -88,7 +88,7 @@ char GSM::SendATCmdWaitResp(char const *AT_cmd_string,
                             char const *response_string,
                             byte no_of_attempts)
 {
-    byte status;
+    char status;
     char ret_val = AT_RESP_ERR_NO_RESP;
     byte i;
 
@@ -154,7 +154,7 @@ char GSM::SendATCmdWaitResp(const __FlashStringHelper *AT_cmd_string,
                             char const *response_string,
                             byte no_of_attempts)
 {
-    byte status;
+    char status;
     char ret_val = AT_RESP_ERR_NO_RESP;
     byte i;
 
@@ -213,9 +213,9 @@ return:
     RX_FINISHED = 1               // finished, some character was received
     RX_TMOUT_ERR = 4              // finished, no character received
 **********************************************************/
-byte GSM::WaitResp(uint16_t start_comm_tmout, uint16_t max_interchar_tmout)
+char GSM::WaitResp(uint16_t start_comm_tmout, uint16_t max_interchar_tmout)
 {
-    byte status;
+    char status;
 
     RxInit(start_comm_tmout, max_interchar_tmout);
     // wait until response is not finished
@@ -236,10 +236,10 @@ return:
     RX_FINISHED = 1               // finished, some character was received
     RX_TMOUT_ERR = 4              // finished, no character received
 **********************************************************/
-byte GSM::IsRxFinished(void)
+char GSM::IsRxFinished(void)
 {
     uint16_t num_of_bytes;
-    byte ret_val = RX_NOT_FINISHED;  // default not finished
+    char ret_val = RX_NOT_FINISHED;  // default not finished
 
     // Rx state machine
     // ----------------
@@ -333,10 +333,10 @@ compare_string - pointer to the string which should be find
 return: 0 - string was NOT received
         1 - string was received
 **********************************************************/
-byte GSM::IsStringReceived(char const *compare_string)
+char GSM::IsStringReceived(char const *compare_string)
 {
     char *ch;
-    byte ret_val = 0;
+    char ret_val = 0;
 
     if(comm_buf_len)
     {
@@ -413,24 +413,21 @@ return:
       AT_RESP_ERR_DIF_RESP = -2,   // wrong response received
       AT_RESP_OK = -1,             // ok
 **********************************************************/
-char GSM::InitSMSMemory(void) //TODO do przepisania - return values
+char GSM::InitSMSMemory(void) 
 {
     char ret_val = AT_RESP_ERR_NO_RESP;
-    ret_val = 0; // not initialized yet
+
     //Disable messages about new SMS from the GSM module
     //SendATCmdWaitResp(F("AT+CNMI=2,0"), CNMI_TO, 50, str_ok, 2);
 
     //Message about new SMS from the GSM module
-    SendATCmdWaitResp(F("AT+CNMI=2,1"), CNMI_TO, 50, str_ok, 5);
+    ret_val = SendATCmdWaitResp(F("AT+CNMI=2,1"), CNMI_TO, 50, str_ok, 5);
+    if (ret_val != AT_RESP_OK) return ret_val;
 
     // send AT command to init memory for SMS in the SIM card
     // response:
     // +CPMS: <usedr>,<totalr>,<usedw>,<totalw>,<useds>,<totals>
-    if (AT_RESP_OK == SendATCmdWaitResp(F("AT+CPMS=\"SM\",\"SM\",\"SM\""), CNMI_TO, 1000, "+CPMS:", 10))
-    {
-        ret_val = 1;
-    }
-    else ret_val = 0;
+    ret_val = SendATCmdWaitResp(F("AT+CPMS=\"SM\",\"SM\",\"SM\""), CNMI_TO, 1000, "+CPMS:", 10);
     return (ret_val);
 }
 
